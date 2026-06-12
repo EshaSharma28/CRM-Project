@@ -1,0 +1,35 @@
+# Local development: Postgres + both FastAPI services in one command.
+# (Frontend runs separately via `npm run dev` for fast HMR.)
+#   docker compose up
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: brewhaus
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  crm-backend:
+    build: ./crm-backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/brewhaus
+      CHANNEL_SERVICE_URL: http://channel-service:8001
+      CRM_PUBLIC_URL: http://crm-backend:8000
+      AI_PROVIDER: gemini
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  channel-service:
+    build: ./channel-service
+    ports:
+      - "8001:8001"
+
+volumes:
+  pgdata:

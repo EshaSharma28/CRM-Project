@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-text font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-text text-surface-white px-4 py-2 rounded-xl font-medium transition-transform hover:scale-105 active:scale-95 shadow-sm;
+  }
+  .btn-secondary {
+    @apply bg-surface border border-border text-text px-4 py-2 rounded-xl font-medium transition-transform hover:scale-105 active:scale-95 shadow-sm;
+  }
+  .card {
+    @apply bg-surface-white border border-border rounded-2xl shadow-sm p-6;
+  }
+  .input-field {
+    @apply w-full bg-surface border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-caramel/50 transition-shadow;
+  }
+}
+
+/* Custom shimmer animation class for loading states */
+.shimmer-bg {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  @apply animate-shimmer;
+}

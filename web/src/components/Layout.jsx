@@ -1,7 +1,8 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Coffee, LayoutDashboard, Users, Megaphone, Activity, Bot, LogOut, Upload, Search, Sparkles } from "lucide-react";
+import { Coffee, LayoutDashboard, Users, Megaphone, Activity, Bot, LogOut, Upload, Search, Sparkles, TrendingUp, Zap } from "lucide-react";
 import clsx from "clsx";
+import FloatingAgent from "./FloatingAgent";
 
 export default function Layout() {
   const { logout } = useAuth();
@@ -14,13 +15,13 @@ export default function Layout() {
 
   const navItems = [
     { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/analytics", icon: TrendingUp, label: "Analytics Studio", showcase: true },
     { to: "/copilot", icon: Bot, label: "Copilot", showcase: true },
     { to: "/agent", icon: Sparkles, label: "Autonomous agent", showcase: true },
-    { to: "/ask", icon: Search, label: "Ask your data", showcase: true },
+    { to: "/automations", icon: Zap, label: "Automations", showcase: true },
     { to: "/audiences", icon: Users, label: "Audiences" },
     { to: "/campaigns", icon: Megaphone, label: "Campaigns" },
     { to: "/shoppers", icon: Users, label: "Shoppers" },
-    { to: "/import", icon: Upload, label: "Import data" },
     { to: "/activity", icon: Activity, label: "Activity" },
   ];
 
@@ -91,6 +92,8 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+
+      <FloatingAgent />
     </div>
   );
 }

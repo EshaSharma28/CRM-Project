@@ -18,6 +18,7 @@ import json
 from app.ai.client import AIUnavailable, get_ai
 from app.ai.prompts import (
     ANALYTICS,
+    ASSISTANT_ROUTER,
     CHAT_REFINE,
     DRAFT_MESSAGE,
     GOAL_TO_SEGMENT,
@@ -27,6 +28,7 @@ from app.database import get_db
 from app.models import Campaign, Customer, Segment
 from app.schemas import (
     AskIn,
+    AssistantIn,
     ChatIn,
     CopilotGoal,
     CopilotLaunchIn,
@@ -180,6 +182,7 @@ def launch(payload: CopilotLaunchIn, background: BackgroundTasks, db: Session = 
         channel=payload.channel,
         message_template=payload.message_template,
         message_template_b=payload.message_template_b,
+        channel_b=payload.channel_b,
         status="draft",
     )
     db.add(campaign)
@@ -188,3 +191,24 @@ def launch(payload: CopilotLaunchIn, background: BackgroundTasks, db: Session = 
 
     background.add_task(dispatch_campaign, campaign.id)
     return {"campaign_id": campaign.id, "segment_id": segment.id, "status": "accepted"}
+
+
+@router.post("/assistant")
+def assistant(payload: AssistantIn):
+    """The universal assistant router. Takes history + message, decides what to do."""
+    history_text = "\n".join(
+        f"{'User' if m.role == 'user' else 'Assistant'}: {m.content}"
+        for m in payload.history
+    )
+    
+    prompt = ASSISTANT_ROUTER.format(
+        history=history_text,
+        message=payload.message
+    )
+    
+    try:
+        action_spec = get_ai().generate_json(prompt)
+    except AIUnavailable as e:
+        raise HTTPException(e.status, e.message)
+        
+    return action_spec

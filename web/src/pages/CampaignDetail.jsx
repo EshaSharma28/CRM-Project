@@ -159,7 +159,7 @@ export default function CampaignDetail() {
               <h3 className="text-2xl font-serif font-bold text-mocha-dark">{inrCompact(stats.attributed_revenue)}</h3>
               {stats.est_cost > 0 && (
                 <p className="text-[11px] text-text/50 mt-1">
-                  cost {inrCompact(stats.est_cost)} · {Math.round(stats.attributed_revenue / stats.est_cost) || 0}× return
+                  cost {inrCompact(stats.est_cost)} · {Math.round(stats.attributed_revenue / stats.est_cost).toLocaleString("en-IN") || 0}× ROAS
                 </p>
               )}
             </div>
@@ -311,9 +311,11 @@ function AbComparison({ variants, significance }) {
                 </div>
                 {v.roi_pct != null && (
                   <div className="text-right">
-                    <div className="text-[10px] text-text/50 uppercase tracking-wider">ROI</div>
+                    <div className="text-[10px] text-text/50 uppercase tracking-wider">ROAS</div>
                     <div className={`font-bold text-sm ${v.roi_pct >= 0 ? "text-sage" : "text-error"}`}>
-                      {v.roi_pct >= 0 ? "+" : ""}{v.roi_pct}%
+                      {v.roi_pct >= 100 
+                        ? `${Math.round(v.roi_pct / 100).toLocaleString("en-IN")}×` 
+                        : `${v.roi_pct >= 0 ? "+" : ""}${v.roi_pct}%`}
                     </div>
                   </div>
                 )}

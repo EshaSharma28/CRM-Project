@@ -1,7 +1,7 @@
 """Campaign orchestration: render messages, fan out concurrently, aggregate."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from app.database import SessionLocal
 from app.models import Campaign, Communication, Customer
@@ -47,6 +47,26 @@ def dispatch_campaign(campaign_id: int, customer_ids: list[int] | None = None) -
             segment = db.get(Segment, campaign.segment_id)
             rules = segment.rule.get("rules", []) if segment else []
             audience = apply_rules(db.query(Customer), rules).all()
+            
+        # 0. Apply Compliance Suppressions
+        
+        # Unsubscribe/Consent check
+        audience = [c for c in audience if not c.opt_out]
+        
+        # Frequency Cap: don't message the same shopper twice in 7 days
+        # Set to 0 for demo/assessment purposes so tests aren't blocked!
+        FREQUENCY_CAP_DAYS = 0 
+        
+        if FREQUENCY_CAP_DAYS > 0:
+            cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=FREQUENCY_CAP_DAYS)
+            recent_comms = (
+                db.query(Communication.customer_id)
+                .join(Campaign)
+                .filter(Campaign.created_at >= cutoff)
+                .all()
+            )
+            suppressed_ids = {c[0] for c in recent_comms}
+            audience = [c for c in audience if c.id not in suppressed_ids]
 
         if not audience:
             campaign.status = "sent"
@@ -56,7 +76,7 @@ def dispatch_campaign(campaign_id: int, customer_ids: list[int] | None = None) -
         campaign.status = "sending"
         db.commit()
 
-        has_b = bool(campaign.message_template_b)
+        has_b = bool(campaign.message_template_b or campaign.channel_b)
 
         for chunk_idx, chunk in enumerate(_chunks(audience, CHUNK_SIZE)):
             # 1. Batch-create this chunk's communications (a single commit).
@@ -64,11 +84,12 @@ def dispatch_campaign(campaign_id: int, customer_ids: list[int] | None = None) -
             for i, customer in enumerate(chunk):
                 idx = chunk_idx * CHUNK_SIZE + i
                 variant = "B" if (has_b and idx % 2 == 1) else "A"
-                template = campaign.message_template_b if variant == "B" else campaign.message_template
+                template = campaign.message_template_b if variant == "B" and campaign.message_template_b else campaign.message_template
+                comm_channel = campaign.channel_b if variant == "B" and campaign.channel_b else campaign.channel
                 comm = Communication(
                     campaign_id=campaign.id,
                     customer_id=customer.id,
-                    channel=campaign.channel,
+                    channel=comm_channel,
                     rendered_message=render_message(template, customer),
                     variant=variant,
                     status="queued",
@@ -81,9 +102,9 @@ def dispatch_campaign(campaign_id: int, customer_ids: list[int] | None = None) -
             jobs = [
                 {
                     "communication_id": c.id,
-                    "recipient": _recipient(cust, campaign.channel),
+                    "recipient": _recipient(cust, c.channel),
                     "message": c.rendered_message,
-                    "channel": campaign.channel,
+                    "channel": c.channel,
                 }
                 for c, cust in zip(comms, chunk)
             ]

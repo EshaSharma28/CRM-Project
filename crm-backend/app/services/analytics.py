@@ -76,6 +76,26 @@ def _month_bucket(rows, metric: str) -> list[dict]:
     return out
 
 
+def _weekday_bucket(rows, metric: str) -> list[dict]:
+    buckets: dict[str, list[float]] = defaultdict(list)
+    for dt, amount in rows:
+        buckets[dt.strftime("%A")].append(amount)
+        
+    days_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    out = []
+    for day in days_order:
+        if day in buckets:
+            vals = buckets[day]
+            if metric == "revenue":
+                v = round(sum(vals), 2)
+            elif metric == "avg_order_value":
+                v = round(sum(vals) / len(vals), 2)
+            else:  # order_count
+                v = len(vals)
+            out.append({"label": day, "value": v})
+    return out
+
+
 def run_analytics(db, spec: dict) -> dict:
     entity = spec.get("entity", "shoppers")
     group_by = spec.get("group_by")
@@ -95,6 +115,10 @@ def run_analytics(db, spec: dict) -> dict:
             rows = q.with_entities(Order.ordered_at, Order.amount).all()
             return {"entity": entity, "metric": metric, "group_by": "month",
                     "rows": _month_bucket(rows, metric)}
+        if group_by == "weekday":
+            rows = q.with_entities(Order.ordered_at, Order.amount).all()
+            return {"entity": entity, "metric": metric, "group_by": "weekday",
+                    "rows": _weekday_bucket(rows, metric)}
         col = ORDER_DIMS.get(group_by)
         if col is not None:
             res = q.with_entities(col, agg).group_by(col).order_by(agg.desc()).all()

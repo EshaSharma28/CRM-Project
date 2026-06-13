@@ -13,12 +13,14 @@ This is the heart of the system-design story. Properties enforced here:
 """
 import random
 from datetime import datetime
+import hmac
+import hashlib
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Communication, CommunicationEvent, Customer, Order
+from app.models import Campaign, Communication, CommunicationEvent, Customer, Order
 from app.schemas import ReceiptEvent
 
 router = APIRouter(prefix="/receipts", tags=["receipts"])
@@ -154,8 +156,27 @@ def ingest_event(
 
 
 @router.post("")
-def ingest_receipt(event: ReceiptEvent, db: Session = Depends(get_db)):
+async def ingest_receipt(
+    request: Request,
+    x_hub_signature: str = Header(None),
+    db: Session = Depends(get_db)
+):
     """Ingest one engagement event from the channel service (async callback)."""
+    
+    # Verify HMAC signature
+    if not x_hub_signature or not x_hub_signature.startswith("sha256="):
+        raise HTTPException(status_code=401, detail="Missing or invalid signature header")
+        
+    payload_bytes = await request.body()
+    expected_signature = hmac.new(b"brewhaus_supersecret", payload_bytes, hashlib.sha256).hexdigest()
+    
+    if not hmac.compare_digest(x_hub_signature.replace("sha256=", ""), expected_signature):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    import json
+    data = json.loads(payload_bytes)
+    event = ReceiptEvent(**data)
+
     occurred_at = datetime.fromisoformat(event.occurred_at).replace(tzinfo=None)
     result = ingest_event(
         db, event.event_id, event.communication_id, event.event_type, occurred_at
@@ -163,6 +184,30 @@ def ingest_receipt(event: ReceiptEvent, db: Session = Depends(get_db)):
     if result == "unknown":
         raise HTTPException(404, "Communication not found or unknown event type")
     return {"status": result}
+
+
+@router.get("/events")
+def list_recent_events(limit: int = 50, db: Session = Depends(get_db)):
+    """Fetch the real webhook event log, joined with campaign metadata."""
+    rows = (
+        db.query(CommunicationEvent, Communication, Campaign)
+        .join(Communication, Communication.id == CommunicationEvent.communication_id)
+        .join(Campaign, Campaign.id == Communication.campaign_id)
+        .order_by(CommunicationEvent.occurred_at.desc())
+        .limit(limit)
+        .all()
+    )
+    
+    return [
+        {
+            "id": event.event_id,
+            "campaignName": campaign.name,
+            "channel": communication.channel,
+            "type": event.event_type,
+            "timestamp": event.occurred_at.isoformat()
+        }
+        for event, communication, campaign in rows
+    ]
 
 
 @router.post("/reconcile")

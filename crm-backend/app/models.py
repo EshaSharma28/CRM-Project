@@ -34,6 +34,7 @@ class Customer(Base):
     city: Mapped[str] = mapped_column(String(80), index=True)
     channel_pref: Mapped[str] = mapped_column(String(20))  # whatsapp|email|sms
     signup_date: Mapped[datetime] = mapped_column(DateTime)
+    opt_out: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Derived/cached behavioural fields the AI segments on (kept fresh on ingest).
     persona: Mapped[str] = mapped_column(String(40), index=True)  # for eval only
@@ -89,6 +90,7 @@ class Campaign(Base):
     message_template: Mapped[str] = mapped_column(String(2000))
     # Optional A/B variant — when set, the audience is split 50/50 across A and B.
     message_template_b: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    channel_b: Mapped[str | None] = mapped_column(String(20), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="draft")  # draft|sending|sent
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
@@ -156,6 +158,50 @@ class JourneyStep(Base):
     campaign_id: Mapped[int | None] = mapped_column(ForeignKey("campaigns.id"), nullable=True)
 
     journey: Mapped["Journey"] = relationship(back_populates="steps")
+
+
+class Automation(Base):
+    """A standing, event-triggered automation (e.g. abandoned-cart recovery).
+
+    Unlike a batch Campaign (send-now), an automation is a rule that runs
+    continuously on live data: watch an event -> wait -> check a condition -> act.
+    """
+
+    __tablename__ = "automations"
+
+    key: Mapped[str] = mapped_column(String(40), primary_key=True)  # "abandoned_cart"
+    name: Mapped[str] = mapped_column(String(120))
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    delay_label: Mapped[str] = mapped_column(String(60), default="2 hours")
+    channel: Mapped[str] = mapped_column(String(20), default="whatsapp")
+    message_template: Mapped[str] = mapped_column(String(600), default="")
+    # The campaign that recovery communications attach to (so they flow through
+    # the same channel loop + stats + attribution as everything else).
+    campaign_id: Mapped[int | None] = mapped_column(ForeignKey("campaigns.id"), nullable=True)
+
+
+class CartEvent(Base):
+    """A shopper adding an item to cart — the trigger for abandoned-cart recovery.
+
+    status: open -> purchased (self-checkout, no recovery needed)
+            open -> recovery_sent (abandoned long enough; we nudged them)
+            recovery_sent -> recovered (they came back and bought after the nudge)
+    """
+
+    __tablename__ = "cart_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), index=True)
+    product: Mapped[str] = mapped_column(String(120))
+    amount: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    status: Mapped[str] = mapped_column(String(20), default="open", index=True)
+    recovery_communication_id: Mapped[int | None] = mapped_column(
+        ForeignKey("communications.id"), nullable=True
+    )
+    recovered_order_id: Mapped[int | None] = mapped_column(
+        ForeignKey("orders.id"), nullable=True
+    )
 
 
 class CommunicationEvent(Base):

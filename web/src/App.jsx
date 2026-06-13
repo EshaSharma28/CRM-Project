@@ -11,8 +11,9 @@ import Audiences from "./pages/Audiences";
 import CampaignList from "./pages/CampaignList";
 import CampaignDetail from "./pages/CampaignDetail";
 import Shoppers from "./pages/Shoppers";
-import Ask from "./pages/Ask";
+import Analytics from "./pages/Analytics";
 import Import from "./pages/Import";
+import Automations from "./pages/Automations";
 import ActivityFeed from "./pages/ActivityFeed";
 
 export default function App() {
@@ -24,9 +25,10 @@ export default function App() {
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/copilot" element={<Copilot />} />
-          <Route path="/ask" element={<Ask />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/agent" element={<Agent />} />
           <Route path="/audiences" element={<Audiences />} />
+          <Route path="/automations" element={<Automations />} />
           <Route path="/campaigns" element={<CampaignList />} />
           <Route path="/campaigns/:id" element={<CampaignDetail />} />
           <Route path="/shoppers" element={<Shoppers />} />

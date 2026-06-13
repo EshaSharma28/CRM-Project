@@ -8,6 +8,7 @@ const FIELDS = [
 ];
 
 const OPS = ["eq", "gt", "lt", "gte", "lte"];
+const OP_MAP = { eq: "=", gt: ">", lt: "<", gte: "≥", lte: "≤" };
 
 const LIFECYCLE_STAGES = ["new", "active", "at_risk", "lapsed", "churned"];
 const CHANNELS = ["email", "sms", "whatsapp"];
@@ -162,7 +163,7 @@ export default function Audiences() {
                     onChange={(e) => updateRule(i, "op", e.target.value)}
                     className="input-field py-2 w-24"
                   >
-                    {OPS.map(op => <option key={op} value={op}>{op}</option>)}
+                    {OPS.map(op => <option key={op} value={op}>{OP_MAP[op] || op}</option>)}
                   </select>
                   <div className="flex-1">
                     {renderValueInput(rule, i)}
@@ -248,7 +249,7 @@ export default function Audiences() {
                   <div className="flex flex-wrap gap-1">
                     {s.rules?.map((r, i) => (
                       <span key={i} className="text-[10px] bg-white border border-border px-1.5 py-0.5 rounded text-text/70 uppercase">
-                        {r.field} {r.op} {r.value}
+                        {r.field.replace(/_/g, ' ')} {OP_MAP[r.op] || r.op} {r.value}
                       </span>
                     ))}
                   </div>

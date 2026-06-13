@@ -24,6 +24,7 @@ export const api = {
   segments: () => req("/segments"),
   
   reconcile: () => req("/receipts/reconcile", { method: "POST" }),
+  events: (limit = 50) => req(`/receipts/events?limit=${limit}`),
   campaigns: () => req("/campaigns"),
   createCampaign: (campaign) => req("/campaigns", { method: "POST", body: JSON.stringify(campaign) }),
   sendCampaign: (id) => req(`/campaigns/${id}/send`, { method: "POST" }),
@@ -38,18 +39,26 @@ export const api = {
     req("/copilot/chat", { method: "POST", body: JSON.stringify({ messages, proposal }) }),
   ask: (question) =>
     req("/copilot/ask", { method: "POST", body: JSON.stringify({ question }) }),
+  launch: (proposal) =>
+    req("/copilot/launch", { method: "POST", body: JSON.stringify(proposal) }),
+  assistant: (history, message) =>
+    req("/copilot/assistant", { method: "POST", body: JSON.stringify({ history, message }) }),
 
   agentPlan: (goal) =>
     req("/agent/plan", { method: "POST", body: JSON.stringify({ goal }) }),
   agentRun: (payload) =>
     req("/agent/run", { method: "POST", body: JSON.stringify(payload) }),
   agentJourney: (id) => req(`/agent/journeys/${id}`),
-  launch: (proposal) =>
-    req("/copilot/launch", { method: "POST", body: JSON.stringify(proposal) }),
+
+  automationCart: () => req("/automations/abandoned-cart"),
+  automationToggle: (enabled) =>
+    req("/automations/abandoned-cart/toggle", { method: "POST", body: JSON.stringify({ enabled }) }),
+  automationCarts: (limit = 20) => req(`/automations/abandoned-cart/carts?limit=${limit}`),
 
   // CSV ingestion (multipart — no JSON content-type header).
   ingestCustomers: (file) => uploadCsv("/ingest/customers", file),
   ingestOrders: (file) => uploadCsv("/ingest/orders", file),
+  ingestSmart: (file) => uploadCsv("/ingest/smart", file),
   sampleUrl: (kind) => `${BASE}/ingest/sample/${kind}`,
 };
 

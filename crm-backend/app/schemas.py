@@ -84,6 +84,7 @@ class CampaignCreateIn(BaseModel):
     channel: str
     message_template: str
     message_template_b: str | None = None
+    channel_b: str | None = None
 
 
 class DraftIn(BaseModel):
@@ -109,6 +110,13 @@ class ChatIn(BaseModel):
 
     messages: list[ChatMsg]
     proposal: dict | None = None
+
+
+class AssistantIn(BaseModel):
+    """Universal AI assistant request: conversation history + new message."""
+
+    history: list[ChatMsg]
+    message: str
 
 
 # --- Agentic journeys ------------------------------------------------------
@@ -143,6 +151,7 @@ class CopilotLaunchIn(BaseModel):
     channel: str
     message_template: str
     message_template_b: str | None = None
+    channel_b: str | None = None
 
 
 # --- Receipts (callbacks from the channel service) -------------------------

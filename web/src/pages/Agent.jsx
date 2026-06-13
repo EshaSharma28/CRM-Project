@@ -19,12 +19,13 @@ export default function Agent() {
   const [error, setError] = useState("");
   const [journeyId, setJourneyId] = useState(null);
   const [journey, setJourney] = useState(null);
+  const [editingStepIndex, setEditingStepIndex] = useState(null);
   const poll = useRef(null);
 
   async function makePlan(text) {
     const g = (text ?? goal).trim();
     if (!g) return;
-    setGoal(g); setError(""); setPlan(null); setJourney(null); setJourneyId(null);
+    setGoal(g); setError(""); setPlan(null); setJourney(null); setJourneyId(null); setEditingStepIndex(null);
     setPlanning(true);
     try {
       setPlan(await api.agentPlan(g));
@@ -32,7 +33,14 @@ export default function Agent() {
     finally { setPlanning(false); }
   }
 
+  const updateStep = (index, field, value) => {
+    const newSteps = [...plan.steps];
+    newSteps[index] = { ...newSteps[index], [field]: value };
+    setPlan({ ...plan, steps: newSteps });
+  };
+
   async function runJourney() {
+    setEditingStepIndex(null);
     try {
       const payload = {
         name: plan.name, goal, objective: plan.objective || "",
@@ -128,15 +136,30 @@ export default function Agent() {
             {steps.map((s, i) => {
               const Icon = CHANNEL_ICON[s.channel] || Mail;
               const st = journey ? s.status : "planned";
+              const isEditing = !journey && editingStepIndex === i;
+
               return (
                 <div key={i}>
                   {i > 0 && (
                     <div className="flex items-center gap-2 text-text/40 text-xs pl-5 py-1">
                       <ArrowDown className="w-3.5 h-3.5" />
-                      <Clock className="w-3 h-3" /> {s.wait_label || "next"} · re-targets {labelKind(s.audience_kind)}
+                      <Clock className="w-3 h-3" /> 
+                      {isEditing ? (
+                        <input 
+                          type="text" 
+                          value={s.wait_label || ""} 
+                          onChange={(e) => updateStep(i, "wait_label", e.target.value)} 
+                          className="bg-transparent border-b border-border outline-none text-text focus:border-caramel px-1" 
+                          placeholder="Wait time..."
+                        />
+                      ) : (
+                        <span>{s.wait_label || "next"}</span>
+                      )}
+                      {" "}· re-targets {labelKind(s.audience_kind)}
                     </div>
                   )}
                   <div className={clsx("rounded-xl border p-4 flex gap-3 transition-colors",
+                    isEditing ? "border-caramel bg-caramel/5 shadow-sm" :
                     st === "sent" ? "border-success/30 bg-success/5" :
                     st === "running" ? "border-warning/40 bg-warning/5" :
                     st === "skipped" ? "border-border bg-surface/40 opacity-60" : "border-border bg-surface/40")}>
@@ -144,13 +167,44 @@ export default function Agent() {
                       <StepIcon status={st} Icon={Icon} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center justify-between gap-2 mb-2">
                         <h3 className="font-medium text-mocha-dark">{s.label}</h3>
-                        <span className="text-xs text-text/50 capitalize whitespace-nowrap flex items-center gap-1">
-                          <Icon className="w-3.5 h-3.5" /> {s.channel}
-                        </span>
+                        
+                        {!journey && (
+                          <button 
+                            onClick={() => setEditingStepIndex(isEditing ? null : i)}
+                            className={clsx("text-xs font-medium px-2.5 py-1 rounded-full transition-colors", 
+                              isEditing ? "bg-caramel text-white" : "bg-white border border-border text-text hover:text-caramel"
+                            )}
+                          >
+                            {isEditing ? "Save" : "Edit"}
+                          </button>
+                        )}
                       </div>
-                      <p className="text-sm text-text/60 mt-1 line-clamp-2">{s.message || s.message_template}</p>
+                      
+                      {isEditing ? (
+                        <div className="space-y-3 mt-2">
+                          <select 
+                            value={s.channel} 
+                            onChange={(e) => updateStep(i, "channel", e.target.value)}
+                            className="input-field py-1.5 text-sm w-fit capitalize"
+                          >
+                            {Object.keys(CHANNEL_ICON).map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                          <textarea 
+                            value={s.message || s.message_template} 
+                            onChange={(e) => updateStep(i, "message", e.target.value)}
+                            className="input-field min-h-[80px] resize-y text-sm bg-white"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <span className="text-xs text-text/50 capitalize flex items-center gap-1 mb-1">
+                            <Icon className="w-3.5 h-3.5" /> {s.channel}
+                          </span>
+                          <p className="text-sm text-text/60 line-clamp-2">{s.message || s.message_template}</p>
+                        </>
+                      )}
 
                       {/* live stats once running */}
                       {journey && s.campaign_id && (

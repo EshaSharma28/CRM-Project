@@ -8,6 +8,7 @@ from app.database import Base, engine
 from app.routers import (
     agent,
     ai_copilot,
+    automation,
     campaigns,
     customers,
     ingest,
@@ -30,8 +31,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for r in (customers, orders, segments, campaigns, receipts, ai_copilot, rfm, ingest, agent):
+for r in (customers, orders, segments, campaigns, receipts, ai_copilot, rfm, ingest, agent, automation):
     app.include_router(r.router)
+
+
+@app.on_event("startup")
+def _start_automation_worker():
+    # Standing background worker for event-triggered automations (abandoned cart).
+    from app.services.automation import start
+
+    start()
 
 
 @app.get("/health")

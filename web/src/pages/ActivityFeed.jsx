@@ -9,7 +9,6 @@ export default function ActivityFeed() {
   const [events, setEvents] = useState([]);
   const [reconciling, setReconciling] = useState(false);
   const [reconResult, setReconResult] = useState(null);
-  const previousStatsRef = useRef({});
 
   async function handleReconcile() {
     setReconciling(true);
@@ -26,62 +25,21 @@ export default function ActivityFeed() {
   }
 
   useEffect(() => {
-    // Generate initial synthetic events or just wait for polling
-    const pollInterval = setInterval(async () => {
+    const fetchEvents = async () => {
       try {
-        const campaigns = await api.campaigns();
-        const activeCamps = campaigns.filter(c => c.status !== 'draft');
-        
-        for (const camp of activeCamps) {
-          try {
-            const stats = await api.stats(camp.id);
-            const prev = previousStatsRef.current[camp.id] || { delivered: 0, opened: 0, clicked: 0, failed: 0 };
-            
-            const newEvents = [];
-            const addEvents = (type, count) => {
-              for (let i = 0; i < count; i++) {
-                newEvents.push({
-                  id: `${camp.id}-${type}-${Date.now()}-${Math.random()}`,
-                  campaignName: camp.name,
-                  channel: camp.channel,
-                  type: type,
-                  timestamp: new Date()
-                });
-              }
-            };
-
-            const deltas = {
-              delivered: Math.max(0, stats.delivered - prev.delivered),
-              opened: Math.max(0, stats.opened - prev.opened),
-              read: Math.max(0, stats.read - (prev.read || 0)),
-              clicked: Math.max(0, stats.clicked - prev.clicked),
-              failed: Math.max(0, stats.failed - prev.failed),
-            };
-
-            // Limit huge bursts to avoid lagging the UI
-            addEvents('delivered', Math.min(deltas.delivered, 5));
-            addEvents('opened', Math.min(deltas.opened, 5));
-            addEvents('read', Math.min(deltas.read, 5));
-            addEvents('clicked', Math.min(deltas.clicked, 3));
-            addEvents('failed', Math.min(deltas.failed, 2));
-
-            // Shuffle events to simulate out-of-order async arrival
-            newEvents.sort(() => Math.random() - 0.5);
-
-            if (newEvents.length > 0) {
-              setEvents(curr => [...newEvents, ...curr].slice(0, MAX_EVENTS));
-            }
-
-            previousStatsRef.current[camp.id] = stats;
-          } catch (e) {
-            // ignore individual stat fetch errors
-          }
-        }
+        const rawEvents = await api.events(MAX_EVENTS);
+        const parsed = rawEvents.map(e => ({
+          ...e,
+          timestamp: new Date(e.timestamp)
+        }));
+        setEvents(parsed);
       } catch (e) {
         console.error("Feed polling error", e);
       }
-    }, 2000);
+    };
 
+    fetchEvents();
+    const pollInterval = setInterval(fetchEvents, 2000);
     return () => clearInterval(pollInterval);
   }, []);
 

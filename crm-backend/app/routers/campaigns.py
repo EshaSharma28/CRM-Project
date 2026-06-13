@@ -25,6 +25,7 @@ def create_campaign(payload: CampaignCreateIn, db: Session = Depends(get_db)):
         channel=payload.channel,
         message_template=payload.message_template,
         message_template_b=payload.message_template_b,
+        channel_b=payload.channel_b,
         status="draft",
     )
     db.add(campaign)
@@ -37,7 +38,13 @@ def create_campaign(payload: CampaignCreateIn, db: Session = Depends(get_db)):
 def list_campaigns(db: Session = Depends(get_db)):
     rows = db.query(Campaign).order_by(Campaign.created_at.desc()).all()
     return [
-        {"id": c.id, "name": c.name, "channel": c.channel, "status": c.status}
+        {
+            "id": c.id, 
+            "name": c.name, 
+            "channel": c.channel, 
+            "status": c.status,
+            "has_ab_test": bool(c.message_template_b or c.channel_b)
+        }
         for c in rows
     ]
 
@@ -96,8 +103,11 @@ def campaign_stats(campaign_id: int, db: Session = Depends(get_db)):
     }
 
     # A/B breakdown + multi-metric significance — only when there's a B variant.
-    if campaign.message_template_b:
-        variants = {v: _variant_stats(db, campaign_id, v, campaign.channel) for v in ("A", "B")}
+    if campaign.message_template_b or campaign.channel_b:
+        variants = {
+            "A": _variant_stats(db, campaign_id, "A", campaign.channel),
+            "B": _variant_stats(db, campaign_id, "B", campaign.channel_b or campaign.channel)
+        }
         result["variants"] = variants
         result["ab_significance"] = _ab_significance(variants["A"], variants["B"])
     return result

@@ -65,10 +65,21 @@ def _roll_lifecycle(channel: str, rng: random.Random) -> list[str]:
     return events
 
 
+import hmac
+import hashlib
+import json
+
 async def _post_with_retry(client: httpx.AsyncClient, url: str, payload: dict) -> None:
+    payload_bytes = json.dumps(payload).encode("utf-8")
+    signature = hmac.new(b"brewhaus_supersecret", payload_bytes, hashlib.sha256).hexdigest()
+    headers = {
+        "X-Hub-Signature": f"sha256={signature}",
+        "Content-Type": "application/json"
+    }
+
     for attempt in range(settings.callback_max_retries + 1):
         try:
-            resp = await client.post(url, json=payload, timeout=10)
+            resp = await client.post(url, content=payload_bytes, headers=headers, timeout=10)
             if resp.status_code < 500:
                 return  # 2xx ok or 4xx (won't fix by retrying, e.g. duplicate)
         except httpx.HTTPError:

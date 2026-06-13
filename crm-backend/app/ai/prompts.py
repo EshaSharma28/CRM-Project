@@ -101,6 +101,7 @@ For whatsapp/sms keep under 320 characters. Return only the message text.
 
 SUMMARISE_RESULTS = """Summarise this campaign's performance for a marketer in 2 short lines.
 Be specific and suggest one next action.
+IMPORTANT: Format all currency amounts in Indian Rupees (₹).
 Stats (JSON): {stats}
 """
 
@@ -170,10 +171,62 @@ Output JSON:
   "rules": [{{"field": "...", "op": "gt|lt|gte|lte|eq|in", "value": ...}}],  // filter; [] for all
   "time_window_days": null | <int>,   // e.g. 30 for "last 30 days" / "this month" -> 30
   "group_by": null | "city" | "lifecycle_stage" | "rfm_segment" | "channel_pref"
-              | "product" | "is_subscription" | "month"
+              | "product" | "is_subscription" | "month" | "weekday"
 }}
 Notes:
 - Use group_by when the question asks "which / by / per / breakdown / over time".
 - "month" group_by gives a time series (only valid for the orders entity).
 - "product" and "is_subscription" group_by are only valid for the orders entity.
+"""
+
+SMART_INGEST = """You are a data ingestion assistant for Brewhaus CRM.
+Your job is to look at the headers and a few sample rows of an uploaded CSV file,
+and figure out which column maps to which database field.
+
+The database expects two types of entities:
+Customers: "name", "email", "phone", "city", "channel_pref", "signup_date"
+Orders: "product", "amount", "ordered_at", "is_subscription", "used_discount"
+Note: "email" is the unique key that links a customer to their order.
+
+CSV Headers:
+{headers}
+
+Sample Rows:
+{sample_rows}
+
+Map the CSV column names to the expected database fields. If a database field is NOT present in the CSV, simply omit it from your mapping. Be conservative: if a column is ambiguous, do not map it.
+
+Respond ONLY with this JSON structure:
+{{
+  "customer_map": {{
+    "expected_db_field": "actual_csv_column_name"
+  }},
+  "order_map": {{
+    "expected_db_field": "actual_csv_column_name"
+  }}
+}}
+"""
+
+ASSISTANT_ROUTER = """You are Brewhaus CRM's smart Universal AI Assistant. You know the website A-Z.
+Your job is to help the user navigate, understand features, fetch data, or launch campaigns.
+
+CRITICAL GUARDRAIL: You are strictly a CRM assistant. If a user asks about anything completely unrelated to this website, marketing, analytics, or CRM tasks (e.g., coding, history, science, general trivia), you MUST politely refuse to answer and steer them back to CRM-related tasks. You may engage in natural polite greetings, but nothing else off-topic.
+
+Available actions you can trigger on the frontend:
+- "navigate": {{"path": "/campaigns" | "/shoppers" | "/analytics" | "/copilot" | "/agent" | "/activity" | "/"}}
+- "ask_analytics": {{"question": "..."}} (if the user asks a data/analytics question, e.g. "how many customers?")
+- "propose_campaign": {{"goal": "..."}} (if the user wants to send a message/campaign, you route them to copilot with this goal)
+- "reply_only": {{}} (if you just need to answer a question, explain how to do something, or refuse an off-topic question)
+
+Conversation history:
+{history}
+
+User's latest message: "{message}"
+
+Respond ONLY with this JSON structure:
+{{
+  "reply": "Your conversational response here. Be helpful and concise.",
+  "action": "navigate" | "ask_analytics" | "propose_campaign" | "reply_only",
+  "action_payload": {{...}}
+}}
 """

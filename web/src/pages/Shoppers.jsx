@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
-import { Search, Filter, X, User, ShoppingBag, Calendar, MapPin } from "lucide-react";
+import { Search, Filter, X, User, ShoppingBag, Calendar, MapPin, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Shoppers() {
@@ -72,6 +73,9 @@ export default function Shoppers() {
           <h1 className="text-3xl font-serif font-bold text-mocha-dark">Shoppers</h1>
           <p className="text-text/60 mt-1">View and filter your customer base.</p>
         </div>
+        <Link to="/import" className="btn-primary flex items-center gap-2">
+          <Upload className="w-4 h-4" /> Import Data
+        </Link>
       </div>
 
       <div className="card p-0 overflow-hidden mb-6">

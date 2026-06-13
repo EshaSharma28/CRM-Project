@@ -1,42 +1,31 @@
 import { useState } from "react";
 import { api } from "../api";
-import { Upload, Download, CheckCircle2, AlertCircle, Users, ShoppingBag, FileText } from "lucide-react";
+import { Upload, Download, CheckCircle2, AlertCircle, Sparkles, FileText } from "lucide-react";
 
 export default function Import() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-mocha-dark">Import data</h1>
+        <h1 className="text-3xl font-serif font-bold text-mocha-dark">Smart Data Import</h1>
         <p className="text-text/60 mt-1">
-          Bring in your own shoppers and orders by CSV. We recompute lifecycle stages
-          and RFM segments automatically, so imported data behaves like the rest.
+          Bring in your shoppers and orders in a single CSV file. Our AI will automatically figure out your column names and map them to the correct fields.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="max-w-2xl mx-auto">
         <Dropzone
-          title="Customers"
-          icon={Users}
+          title="Smart Unified Import"
+          icon={Sparkles}
           sample="customers"
-          columns="name, email, phone, city, channel_pref, signup_date"
-          onUpload={api.ingestCustomers}
-          renderResult={(r) => `${r.created} created, ${r.updated} updated`}
-        />
-        <Dropzone
-          title="Orders"
-          icon={ShoppingBag}
-          sample="orders"
-          columns="email, product, amount, ordered_at, is_subscription, used_discount"
-          onUpload={api.ingestOrders}
-          renderResult={(r) => `${r.created} orders added across ${r.customers_updated} customers`}
+          columns="Any CSV with emails, names, order amounts, products, etc."
+          onUpload={api.ingestSmart}
+          renderResult={(r) => `${r.created_customers} customers created, ${r.updated_customers} updated, ${r.created_orders} orders added.`}
         />
       </div>
 
       <div className="card bg-surface/40 border-dashed">
         <p className="text-sm text-text/60">
-          <b className="text-mocha-dark">Tip:</b> import customers first, then orders
-          (orders link to customers by email). New emails create new customers;
-          existing ones are updated. After any import, segments and RFM refresh instantly.
+          <b className="text-mocha-dark">How it works:</b> Upload a spreadsheet combining your users and their order history. The AI reads the headers and maps them directly to the CRM's internal models. We recompute lifecycle stages and RFM segments instantly!
         </p>
       </div>
     </div>

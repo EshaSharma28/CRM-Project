@@ -66,7 +66,14 @@ export default function CampaignList() {
                   <div className="text-text/50 text-xs mt-0.5">ID: {c.id}</div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="capitalize">{c.channel}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="capitalize">{c.channel}</span>
+                    {c.has_ab_test && (
+                      <span className="bg-caramel/15 text-caramel text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm">
+                        A/B Test
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   {getStatusBadge(c.status)}

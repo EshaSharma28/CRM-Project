@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { api } from "../api";
 import { Bot, Sparkles, Send, Mail, MessageSquare, Smartphone, Users, FlaskConical, Rocket, User } from "lucide-react";
 import { motion } from "framer-motion";
@@ -20,6 +20,7 @@ const CHANNELS = [
 
 export default function Copilot() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [messages, setMessages] = useState([]);
   const [proposal, setProposal] = useState(null);
   const [input, setInput] = useState("");
@@ -28,6 +29,7 @@ export default function Copilot() {
   const [campaignName, setCampaignName] = useState("");
   const [abEnabled, setAbEnabled] = useState(false);
   const [variantB, setVariantB] = useState("");
+  const [channelB, setChannelB] = useState("");
   const [draftingB, setDraftingB] = useState(false);
   const [launching, setLaunching] = useState(false);
   const threadRef = useRef(null);
@@ -35,6 +37,14 @@ export default function Copilot() {
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
+
+  useEffect(() => {
+    if (location.state?.initialGoal && messages.length === 0 && !sending) {
+      send(location.state.initialGoal);
+      // Clear state so we don't re-trigger on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   async function send(text) {
     const content = (text ?? input).trim();
@@ -63,7 +73,8 @@ export default function Copilot() {
   async function generateVariantB() {
     setDraftingB(true);
     try {
-      const r = await api.draft(`${proposal.segment_description}. A DIFFERENT angle from the main message, for an A/B test.`, proposal.suggested_channel);
+      const targetChannel = channelB || proposal.suggested_channel;
+      const r = await api.draft(`${proposal.segment_description}. A DIFFERENT angle from the main message, for an A/B test.`, targetChannel);
       setVariantB(r.message_draft || "");
     } catch (e) { setError(e.message); }
     finally { setDraftingB(false); }
@@ -80,6 +91,7 @@ export default function Copilot() {
         channel: proposal.suggested_channel,
         message_template: proposal.message_draft,
         message_template_b: abEnabled && variantB.trim() ? variantB : null,
+        channel_b: abEnabled && channelB && channelB !== proposal.suggested_channel ? channelB : null,
       });
       navigate(`/campaigns/${res.campaign_id}`);
     } catch (e) { setError(e.message); setLaunching(false); }
@@ -178,21 +190,47 @@ export default function Copilot() {
               <Preview channel={proposal.suggested_channel} text={proposal.message_draft} />
             </div>
 
-            {/* A/B */}
-            <div className="border-t border-border pt-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={abEnabled} onChange={(e) => setAbEnabled(e.target.checked)} className="w-4 h-4 accent-caramel" />
-                <span className="text-sm font-medium text-mocha-dark flex items-center gap-1.5"><FlaskConical className="w-4 h-4 text-caramel" /> A/B test a second message</span>
-              </label>
+            {/* A/B Test Card */}
+            <div className={`mt-2 border ${abEnabled ? "border-caramel bg-caramel/5" : "border-border bg-surface"} rounded-xl p-4 transition-colors shadow-sm`}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-mocha-dark flex items-center gap-1.5">
+                    <FlaskConical className="w-4 h-4 text-caramel" /> A/B Test Variants
+                  </h3>
+                  <p className="text-xs text-text/60 mt-0.5">Test a second message variant to optimize engagement.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked={abEnabled} onChange={(e) => setAbEnabled(e.target.checked)} className="sr-only peer" />
+                  <div className="w-9 h-5 bg-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-caramel"></div>
+                </label>
+              </div>
+              
               {abEnabled && (
-                <div className="mt-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs text-text/60">Variant B</span>
-                    <button onClick={generateVariantB} disabled={draftingB} className="text-xs text-caramel font-medium flex items-center gap-1 hover:underline">
-                      <Sparkles className="w-3 h-3" /> {draftingB ? "Drafting…" : "Generate with AI"}
+                <div className="mt-4 pt-4 border-t border-caramel/20">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-mocha-dark uppercase tracking-wider">Variant B Message</span>
+                    <button onClick={generateVariantB} disabled={draftingB} className="text-xs bg-white border border-caramel/30 text-caramel px-2 py-1 rounded hover:bg-caramel/10 transition-colors font-medium flex items-center gap-1 shadow-sm">
+                      <Sparkles className="w-3 h-3" /> {draftingB ? "Drafting…" : "Auto-Generate B"}
                     </button>
                   </div>
-                  <textarea value={variantB} onChange={(e) => setVariantB(e.target.value)} placeholder="Alternative message to test…" className="input-field min-h-[70px] resize-y text-sm" />
+                  
+                  <div className="mb-3">
+                    <label className="block text-[11px] font-medium text-text/60 mb-1">Variant B Channel (optional)</label>
+                    <div className="flex bg-white/50 p-1 rounded-lg border border-border w-fit">
+                      {CHANNELS.map(({ id, icon: Icon }) => {
+                        const isSelected = channelB === id || (!channelB && proposal.suggested_channel === id);
+                        return (
+                          <button key={`b-${id}`} onClick={() => setChannelB(id)}
+                            className={clsx("px-2.5 py-1 text-[11px] font-medium rounded capitalize flex items-center gap-1",
+                              isSelected ? "bg-white shadow-sm text-mocha-dark" : "text-text/60")}>
+                            <Icon className="w-3.5 h-3.5" /> {id}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  <textarea value={variantB} onChange={(e) => setVariantB(e.target.value)} placeholder="Type a completely different angle..." className="input-field min-h-[90px] resize-y text-sm bg-white" />
                 </div>
               )}
             </div>

@@ -26,8 +26,9 @@ export const api = {
   reconcile: () => req("/receipts/reconcile", { method: "POST" }),
   events: (limit = 50) => req(`/receipts/events?limit=${limit}`),
   campaigns: () => req("/campaigns"),
+  previewSegment: (rules) => req("/segments/preview", { method: "POST", body: JSON.stringify({ rules }) }),
   createCampaign: (campaign) => req("/campaigns", { method: "POST", body: JSON.stringify(campaign) }),
-  sendCampaign: (id) => req(`/campaigns/${id}/send`, { method: "POST" }),
+  sendCampaign: (id, payload = null) => req(`/campaigns/${id}/send`, { method: "POST", body: payload ? JSON.stringify(payload) : null }),
   stats: (id) => req(`/campaigns/${id}/stats`),
   insight: (id) => req(`/campaigns/${id}/insight`),
 

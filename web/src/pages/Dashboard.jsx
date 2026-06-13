@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api";
 import { Users, Megaphone, Activity, ShoppingBag, ArrowRight, Bot } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import CountUp from "../components/CountUp";
 import RfmBoard from "../components/RfmBoard";
 
 const COLORS = ["#4A3525", "#BE7E50", "#8FA587", "#D69A52", "#C9695E"];
@@ -78,10 +79,10 @@ export default function Dashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Shoppers", value: sum.total_customers.toLocaleString(), icon: Users, color: "text-mocha" },
-          { label: "Active Campaigns", value: activeCampaigns, icon: Megaphone, color: "text-caramel" },
-          { label: "Avg Open Rate", value: openRate, icon: Activity, color: "text-sage" },
-          { label: "Orders Attributed", value: agg.orders.toLocaleString(), icon: ShoppingBag, color: "text-success" },
+          { label: "Total Shoppers", val: sum.total_customers, icon: Users, color: "text-mocha" },
+          { label: "Active Campaigns", val: activeCampaigns, icon: Megaphone, color: "text-caramel" },
+          { label: "Avg Open Rate", val: agg.sent ? (agg.opened / agg.sent) * 100 : 0, icon: Activity, color: "text-sage", fmt: (v) => agg.sent ? Math.round(v) + "%" : "—" },
+          { label: "Orders Attributed", val: agg.orders, icon: ShoppingBag, color: "text-success" },
         ].map((kpi, i) => (
           <div key={i} className="card flex items-center gap-4">
             <div className={`p-3 rounded-xl bg-surface ${kpi.color}`}>
@@ -89,7 +90,9 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-text/60">{kpi.label}</p>
-              <h3 className="text-2xl font-bold font-serif text-mocha-dark">{kpi.value}</h3>
+              <h3 className="text-2xl font-bold font-serif text-mocha-dark">
+                <CountUp value={kpi.val} formatter={kpi.fmt} />
+              </h3>
             </div>
           </div>
         ))}
@@ -167,6 +170,7 @@ export default function Dashboard() {
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                   c.status === 'sent' ? 'bg-success/10 text-success' :
                   c.status === 'sending' ? 'bg-warning/10 text-warning animate-pulse' :
+                  c.status === 'scheduled' ? 'bg-caramel/10 text-caramel border border-caramel/20' :
                   'bg-surface border border-border text-text'
                 }`}>
                   {c.status}

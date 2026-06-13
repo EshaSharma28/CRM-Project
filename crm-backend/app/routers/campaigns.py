@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Campaign, Communication, Order
-from app.schemas import CampaignCreateIn
+from app.schemas import CampaignCreateIn, CampaignSendIn
 from app.services.campaign_service import dispatch_campaign
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
@@ -51,14 +51,21 @@ def list_campaigns(db: Session = Depends(get_db)):
 
 @router.post("/{campaign_id}/send")
 def send_campaign(
-    campaign_id: int, background: BackgroundTasks, db: Session = Depends(get_db)
+    campaign_id: int, background: BackgroundTasks, payload: CampaignSendIn | None = None, db: Session = Depends(get_db)
 ):
-    """Kick off async fan-out. Returns immediately; receipts stream in after."""
+    """Kick off async fan-out or schedule. Returns immediately."""
     campaign = db.get(Campaign, campaign_id)
     if campaign is None:
         raise HTTPException(404, "Campaign not found")
-    if campaign.status in ("sending", "sent"):
+    if campaign.status in ("sending", "sent", "scheduled"):
         raise HTTPException(409, f"Campaign already {campaign.status}")
+
+    if payload and payload.scheduled_at:
+        campaign.scheduled_at = payload.scheduled_at
+        campaign.status = "scheduled"
+        db.commit()
+        return {"status": "scheduled", "campaign_id": campaign_id}
+
     background.add_task(dispatch_campaign, campaign_id)
     return {"status": "accepted", "campaign_id": campaign_id}
 

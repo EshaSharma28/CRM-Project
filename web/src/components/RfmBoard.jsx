@@ -106,7 +106,7 @@ export default function RfmBoard() {
         </div>
 
         {/* Segment cards */}
-        <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+        <div className="space-y-2">
           {segments.map((name) => {
             const s = data.segments[name];
             return (

@@ -3,6 +3,7 @@ import { api } from "../api";
 import { Sparkles, Search, TrendingUp, BarChart2, DollarSign, Activity, Filter, Award, Percent } from "lucide-react";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
+import CountUp from "../components/CountUp";
 
 const EXAMPLES = [
   "Which city has the most at-risk shoppers?",
@@ -231,11 +232,11 @@ export default function Analytics() {
             ) : (
                <>
                  <div className="text-5xl font-serif font-bold text-success">
-                   {Math.round(roas).toLocaleString('en-IN')}×
+                   <CountUp value={roas} formatter={(v) => `${Math.round(v).toLocaleString('en-IN')}×`} />
                  </div>
                  <p className="text-xs text-text/50 mt-2">
-                   Revenue: ₹{Math.round(globalTotals.revenue).toLocaleString('en-IN')} <br/>
-                   Est. Cost: ₹{Math.round(globalTotals.cost).toLocaleString('en-IN')}
+                   Revenue: <CountUp value={globalTotals.revenue} formatter={(v) => `₹${Math.round(v).toLocaleString('en-IN')}`} /> <br/>
+                   Est. Cost: <CountUp value={globalTotals.cost} formatter={(v) => `₹${Math.round(v).toLocaleString('en-IN')}`} />
                  </p>
                </>
             )}
@@ -346,7 +347,9 @@ export default function Analytics() {
               <div className="flex items-center gap-4 py-6">
                 <div className="bg-sage/10 text-sage p-3 rounded-2xl"><TrendingUp className="w-8 h-8" /></div>
                 <div>
-                  <div className="text-5xl font-serif font-bold text-mocha-dark">{fmt(result.metric, result.value)}</div>
+                  <div className="text-5xl font-serif font-bold text-mocha-dark">
+                    <CountUp value={result.value} formatter={(v) => fmt(result.metric, v)} />
+                  </div>
                   <div className="text-sm text-text/50 mt-1">{METRIC_LABEL[result.metric]}</div>
                 </div>
               </div>

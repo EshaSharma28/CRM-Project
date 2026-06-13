@@ -183,14 +183,16 @@ def launch(payload: CopilotLaunchIn, background: BackgroundTasks, db: Session = 
         message_template=payload.message_template,
         message_template_b=payload.message_template_b,
         channel_b=payload.channel_b,
-        status="draft",
+        status="scheduled" if payload.scheduled_at else "draft",
+        scheduled_at=payload.scheduled_at,
     )
     db.add(campaign)
     db.commit()
     db.refresh(campaign)
 
-    background.add_task(dispatch_campaign, campaign.id)
-    return {"campaign_id": campaign.id, "segment_id": segment.id, "status": "accepted"}
+    if not payload.scheduled_at:
+        background.add_task(dispatch_campaign, campaign.id)
+    return {"campaign_id": campaign.id, "segment_id": segment.id, "status": "scheduled" if payload.scheduled_at else "accepted"}
 
 
 @router.post("/assistant")

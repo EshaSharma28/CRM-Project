@@ -92,6 +92,7 @@ class Campaign(Base):
     message_template_b: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     channel_b: Mapped[str | None] = mapped_column(String(20), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="draft")  # draft|sending|sent
+    scheduled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
 

@@ -80,11 +80,15 @@ class SegmentCreateIn(BaseModel):
 
 class CampaignCreateIn(BaseModel):
     name: str
-    segment_id: int
+    segment_id: str
     channel: str
     message_template: str
     message_template_b: str | None = None
     channel_b: str | None = None
+
+
+class CampaignSendIn(BaseModel):
+    scheduled_at: datetime | None = None
 
 
 class DraftIn(BaseModel):
@@ -152,6 +156,7 @@ class CopilotLaunchIn(BaseModel):
     message_template: str
     message_template_b: str | None = None
     channel_b: str | None = None
+    scheduled_at: datetime | None = None
 
 
 # --- Receipts (callbacks from the channel service) -------------------------

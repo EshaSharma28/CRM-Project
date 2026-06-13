@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { api } from "../api";
 import { ShoppingCart, Zap, Clock, Smartphone, Mail, MessageSquare, TrendingUp, CheckCircle2, MailOpen, MousePointerClick } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import CountUp from "../components/CountUp";
 
 const inr = (n) => "₹" + Math.round(n || 0).toLocaleString("en-IN");
 const CHANNEL_ICON = { whatsapp: Smartphone, email: Mail, sms: MessageSquare, rcs: MessageSquare };
@@ -107,7 +108,7 @@ export default function Automations() {
         <Kpi label="Open carts (live)" value={c.open} sub="being watched" tone="warning" />
         <Kpi label="Self-checkout" value={c.purchased} sub="bought on their own" tone="muted" />
         <Kpi label="Carts recovered" value={c.recovered} sub={`${data.recovery_rate}% of nudged`} tone="success" />
-        <Kpi label="Recovery revenue" value={inr(rs.attributed_revenue)} sub="attributed to nudges" tone="accent" isText />
+        <Kpi label="Recovery revenue" value={rs.attributed_revenue} fmt={(v) => inr(v)} sub="attributed to nudges" tone="accent" isText />
       </div>
 
       {/* Funnel + live cart feed */}
@@ -122,7 +123,9 @@ export default function Automations() {
                   <motion.div className="h-full rounded-full" style={{ background: f.color }}
                     animate={{ width: `${(f.value / maxF) * 100}%` }} transition={{ duration: 0.6 }} />
                 </div>
-                <span className="w-8 text-right text-sm font-semibold text-mocha-dark">{f.value}</span>
+                <span className="w-8 text-right text-sm font-semibold text-mocha-dark">
+                  <CountUp value={f.value} />
+                </span>
               </div>
             ))}
           </div>
@@ -160,14 +163,16 @@ export default function Automations() {
   );
 }
 
-function Kpi({ label, value, sub, tone, isText }) {
+function Kpi({ label, value, fmt, sub, tone, isText }) {
   const toneCls = {
     warning: "text-warning", success: "text-success", accent: "text-caramel", muted: "text-text/50",
   }[tone] || "text-mocha-dark";
   return (
     <div className="card">
       <p className="text-xs font-medium text-text/60">{label}</p>
-      <p className={`font-serif font-bold ${isText ? "text-2xl" : "text-3xl"} ${toneCls} mt-1`}>{value}</p>
+      <p className={`font-serif font-bold ${isText ? "text-2xl" : "text-3xl"} ${toneCls} mt-1`}>
+        <CountUp value={value} formatter={fmt} />
+      </p>
       <p className="text-[11px] text-text/40 mt-0.5">{sub}</p>
     </div>
   );

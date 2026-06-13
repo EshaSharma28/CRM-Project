@@ -79,33 +79,38 @@ export default function Shoppers() {
       </div>
 
       <div className="card p-0 overflow-hidden mb-6">
-        <div className="p-4 border-b border-border bg-surface flex flex-wrap gap-4 items-center">
-          <div className="flex items-center gap-2 text-sm font-medium text-mocha">
-            <Filter className="w-4 h-4" /> Filters:
-          </div>
-          
-          <select 
-            value={stageFilter} 
-            onChange={e => setStageFilter(e.target.value)}
-            className="input-field py-1.5 w-auto text-sm"
-          >
-            <option value="">All Lifecycle Stages</option>
-            <option value="new">New</option>
-            <option value="active">Active</option>
-            <option value="at_risk">At Risk</option>
-            <option value="lapsed">Lapsed</option>
-            <option value="churned">Churned</option>
-          </select>
-          
-          <div className="relative">
+        <div className="p-3 m-4 bg-white border border-border rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="relative flex-1 w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text/40" />
             <input 
               type="text" 
-              placeholder="Filter by city..." 
+              placeholder="Search by name or city..." 
               value={cityFilter}
               onChange={e => setCityFilter(e.target.value)}
-              className="input-field pl-9 py-1.5 text-sm" 
+              className="w-full bg-transparent pl-9 pr-4 py-1.5 text-sm focus:outline-none" 
             />
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+            {[
+              { id: "", label: "All" },
+              { id: "new", label: "New" },
+              { id: "active", label: "Active" },
+              { id: "at_risk", label: "At Risk" },
+              { id: "lapsed", label: "Lapsed" },
+              { id: "churned", label: "Churned" }
+            ].map(stage => (
+              <button
+                key={stage.id}
+                onClick={() => setStageFilter(stage.id)}
+                className={`px-4 py-1.5 text-[13px] font-medium rounded-xl border transition-colors whitespace-nowrap ${
+                  stageFilter === stage.id 
+                    ? "bg-[#FBF7F2] border-[#BE7E50] text-[#BE7E50]" 
+                    : "bg-surface border-transparent text-text/60 hover:text-mocha-dark hover:bg-surface/80"
+                }`}
+              >
+                {stage.label}
+              </button>
+            ))}
           </div>
         </div>
 

@@ -277,7 +277,8 @@ def _variant_stats(db: Session, campaign_id: int, variant: str, channel: str = "
 
     sent = vcount(C.sent_at.isnot(None))
     delivered = vcount(C.delivered_at.isnot(None))
-    opened = vcount(C.opened_at.isnot(None))
+    # WhatsApp/RCS report "read" instead of "opened" — treat both as an open.
+    opened = vcount(C.opened_at.isnot(None)) + vcount(C.read_at.isnot(None))
     clicked = vcount(C.clicked_at.isnot(None))
     failed = vcount(C.failed_at.isnot(None))
     orders = vcount(C.attributed_order_id.isnot(None))

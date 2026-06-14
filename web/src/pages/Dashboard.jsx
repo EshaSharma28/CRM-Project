@@ -50,12 +50,14 @@ export default function Dashboard() {
       setCampaigns(camps);
       // Aggregate real engagement across all campaigns for the KPI tiles.
       const stats = await Promise.all(camps.map((c) => api.stats(c.id).catch(() => null)));
-      const a = { sent: 0, opened: 0, orders: 0 };
+      const a = { sent: 0, opened: 0, orders: 0, revenue: 0 };
       stats.forEach((s) => {
         if (!s) return;
         a.sent += s.sent;
-        a.opened += s.opened;
+        // WhatsApp/RCS report "read" instead of "opened" — count it as an open.
+        a.opened += (s.opened || 0) + (s.read || 0);
         a.orders += s.orders_attributed;
+        a.revenue += s.attributed_revenue || 0;
       });
       setAgg(a);
       setLoading(false);
@@ -105,10 +107,10 @@ export default function Dashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Shoppers", val: sum.total_customers, icon: Users, subtext: "+12% vs last month", trend: true },
-          { label: "Active Campaigns", val: activeCampaigns, icon: Megaphone, subtext: "4 ending this week", trend: false },
-          { label: "Avg Open Rate", val: agg.sent ? (agg.opened / agg.sent) * 100 : 0, icon: Activity, subtext: "+3.2% optimization", trend: true, fmt: (v) => agg.sent ? Math.round(v) + "%" : "—" },
-          { label: "Orders Attributed", val: agg.orders, icon: ShoppingBag, subtext: "₹24,500 total value", trend: false },
+          { label: "Total Shoppers", val: sum.total_customers, icon: Users, subtext: `${Object.keys(sum.by_persona).length} personas`, trend: false },
+          { label: "Active Campaigns", val: activeCampaigns, icon: Megaphone, subtext: `${campaigns.length} total`, trend: false },
+          { label: "Avg Open Rate", val: agg.sent ? (agg.opened / agg.sent) * 100 : 0, icon: Activity, subtext: "opens + WhatsApp reads", trend: false, fmt: (v) => agg.sent ? Math.round(v) + "%" : "—" },
+          { label: "Orders Attributed", val: agg.orders, icon: ShoppingBag, subtext: agg.revenue ? `₹${Math.round(agg.revenue).toLocaleString("en-IN")} attributed` : "via campaigns", trend: false },
         ].map((kpi, i) => (
           <div key={i} className="bg-surface-white p-6 rounded-2xl border border-outline-variant flex flex-col justify-between hover:shadow-sm transition-shadow">
             <div className="flex justify-between items-center mb-4">

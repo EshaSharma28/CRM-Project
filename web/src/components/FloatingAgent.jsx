@@ -70,9 +70,13 @@ export default function FloatingAgent() {
       }
 
       if (res.action === "navigate") {
-        navigate(res.action_payload?.path || "/");
+        // Guard against a hallucinated path rendering a blank page.
+        const VALID = ["/", "/campaigns", "/shoppers", "/analytics", "/crema",
+          "/agent", "/audiences", "/automations", "/import", "/activity", "/settings"];
+        const path = res.action_payload?.path;
+        navigate(VALID.includes(path) ? path : "/");
       } else if (res.action === "propose_campaign") {
-        navigate("/copilot", { state: { initialGoal: res.action_payload?.goal } });
+        navigate("/crema", { state: { initialGoal: res.action_payload?.goal } });
       } else if (res.action === "ask_analytics") {
         // Automatically run the query
         const analyticsRes = await api.ask(res.action_payload?.question || text);

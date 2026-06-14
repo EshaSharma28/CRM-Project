@@ -144,7 +144,7 @@ export default function Automations() {
               </div>
             </div>
             <button onClick={toggleBday}
-              className={`relative w-14 h-7 rounded-full transition-colors ${bday.enabled ? "bg-green-600" : "bg-outline-variant"}`}>
+              className={`relative w-14 h-7 rounded-full transition-colors ${bday.enabled ? "bg-primary" : "bg-outline-variant"}`}>
               <span className={`absolute top-0.5 ${bday.enabled ? "left-7" : "left-0.5"} w-6 h-6 bg-white rounded-full shadow transition-all`} />
             </button>
           </div>
@@ -190,10 +190,10 @@ export default function Automations() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="relative inline-flex items-center w-10 h-5 cursor-pointer" onClick={toggling ? null : toggle}>
-                <div className={`w-full h-full rounded-full transition-colors ${data.enabled ? "bg-primary" : "bg-outline-variant"}`}></div>
-                <div className={`absolute w-3.5 h-3.5 bg-white rounded-full transition-all shadow-sm ${data.enabled ? 'left-[22px]' : 'left-[3px]'}`}></div>
-              </div>
+              <button onClick={toggling ? undefined : toggle}
+                className={`relative w-14 h-7 rounded-full transition-colors ${data.enabled ? "bg-primary" : "bg-outline-variant"}`}>
+                <span className={`absolute top-0.5 ${data.enabled ? "left-7" : "left-0.5"} w-6 h-6 bg-white rounded-full shadow transition-all`} />
+              </button>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

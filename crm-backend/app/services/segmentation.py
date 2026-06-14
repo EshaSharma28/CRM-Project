@@ -32,6 +32,26 @@ DIRECT_FIELDS = {
 # Computed fields need special handling (not stored as a column).
 COMPUTED_FIELDS = {"days_since_last_order"}
 
+# Numeric columns: values arrive as strings from the API and must be coerced,
+# else Postgres rejects `float_column > 'text'` (SQLite would silently allow it).
+NUMERIC_FIELDS = {
+    "total_spent", "order_count", "avg_days_between_orders",
+    "r_score", "f_score", "m_score", "days_since_last_order",
+}
+
+
+def _coerce(field: str, value):
+    """Cast a rule value (or list of values) to a number for numeric fields."""
+    if field not in NUMERIC_FIELDS:
+        return value
+    cast = lambda v: float(v)
+    try:
+        if isinstance(value, (list, tuple)):
+            return [cast(v) for v in value]
+        return cast(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"'{field}' expects a number, got: {value!r}")
+
 
 def _apply_op(column, op: str, value):
     if op == "gt":
@@ -76,6 +96,7 @@ def build_filters(rules: list[dict]):
         field, op, value = rule["field"], rule["op"], rule["value"]
         if op not in SUPPORTED_OPS:
             raise ValueError(f"Unsupported op: {op}")
+        value = _coerce(field, value)
         if field in DIRECT_FIELDS:
             filters.append(_apply_op(DIRECT_FIELDS[field], op, value))
         elif field in COMPUTED_FIELDS:

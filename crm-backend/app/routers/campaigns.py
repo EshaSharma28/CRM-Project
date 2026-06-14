@@ -15,6 +15,16 @@ router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 # Indicative per-message cost by channel (₹) — used for a simple ROI estimate.
 # Real rates vary by provider/geo; this is a defensible demo assumption.
 CHANNEL_COST = {"whatsapp": 0.35, "sms": 0.15, "email": 0.02, "rcs": 0.30}
+# Fixed per-campaign overhead (creative + platform), so cost is never ~0 and ROI
+# stays believable. Owned-channel ROAS is genuinely high, so we report a multiple
+# (e.g. "12× return"), not a percentage that reads like a vanity number.
+CAMPAIGN_OVERHEAD = 250.0
+
+
+def _cost_and_roas(channel: str, sent: int, revenue: float) -> tuple[float, float | None]:
+    cost = round(CAMPAIGN_OVERHEAD + sent * CHANNEL_COST.get(channel, 0.1), 2)
+    roas = round(revenue / cost, 1) if cost > 0 else None  # return on spend (×)
+    return cost, roas
 
 
 @router.post("")
@@ -94,8 +104,7 @@ def campaign_stats(campaign_id: int, db: Session = Depends(get_db)):
         .filter(C.campaign_id == campaign_id)
         .scalar()
     ) or 0.0
-    cost = round(sent * CHANNEL_COST.get(campaign.channel, 0.1), 2)
-    roi = round((revenue - cost) / cost * 100) if cost > 0 else None
+    cost, roas = _cost_and_roas(campaign.channel, sent, revenue)
 
     result = {
         "audience": total,
@@ -108,7 +117,8 @@ def campaign_stats(campaign_id: int, db: Session = Depends(get_db)):
         "orders_attributed": count(C.attributed_order_id.isnot(None)),
         "attributed_revenue": round(revenue, 2),
         "est_cost": cost,
-        "roi_pct": roi,
+        "net_revenue": round(revenue - cost, 2),
+        "roas": roas,
     }
 
     # A/B breakdown + multi-metric significance — only when there's a B variant.
@@ -278,7 +288,7 @@ def _variant_stats(db: Session, campaign_id: int, variant: str, channel: str = "
         .filter(C.campaign_id == campaign_id, C.variant == variant)
         .scalar()
     ) or 0.0
-    cost = round(sent * CHANNEL_COST.get(channel, 0.1), 2)
+    cost, roas = _cost_and_roas(channel, sent, revenue)
 
     return {
         "sent": sent,
@@ -289,7 +299,7 @@ def _variant_stats(db: Session, campaign_id: int, variant: str, channel: str = "
         "orders_attributed": orders,
         "revenue": round(revenue, 2),
         "cost": cost,
-        "roi_pct": round((revenue - cost) / cost * 100) if cost > 0 else None,
+        "roas": roas,
         "open_rate": round(opened / sent * 100, 1) if sent else 0,
         "click_rate": round(clicked / sent * 100, 1) if sent else 0,
         "conversion_rate": round(orders / sent * 100, 1) if sent else 0,

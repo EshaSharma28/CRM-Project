@@ -118,9 +118,9 @@ export default function Analytics() {
           totalClicked += (s.clicked || 0);
           totalOrders += (s.orders_attributed || 0);
           totalRevenue += (s.attributed_revenue || 0);
-          totalCost += (s.sent || 0) * (costs[ch] || 0.02);
+          totalCost += (s.est_cost || 0);
 
-          allCampaigns.push({ ...c, revenue: s.attributed_revenue || 0, orders: s.orders_attributed || 0 });
+          allCampaigns.push({ ...c, revenue: s.attributed_revenue || 0, orders: s.orders_attributed || 0, cost: s.est_cost || 0 });
         });
 
         const formattedStats = Object.entries(statsByChannel)
@@ -338,7 +338,7 @@ export default function Analytics() {
                 <th className="py-4 font-bold">Campaign Name</th>
                 <th className="py-4 font-bold">Status</th>
                 <th className="py-4 font-bold text-right">Revenue</th>
-                <th className="py-4 font-bold text-right">ROI</th>
+                <th className="py-4 font-bold text-right">ROAS</th>
                 <th className="py-4 text-right font-bold">Orders</th>
               </tr>
             </thead>
@@ -346,7 +346,7 @@ export default function Analytics() {
               {statsLoading ? (
                 <tr><td colSpan="5" className="py-8 text-center text-on-surface-variant font-medium">Loading leaderboard...</td></tr>
               ) : topCampaigns.length > 0 ? topCampaigns.map((c, i) => {
-                const roi = c.revenue / (c.sent * 0.02 || 1);
+                const roi = c.cost ? c.revenue / c.cost : 0;
                 const Icon = c.channel === 'email' ? Mail : MessageSquare;
                 return (
                   <tr key={c.id} className="hover:bg-surface-container-lowest transition-colors">

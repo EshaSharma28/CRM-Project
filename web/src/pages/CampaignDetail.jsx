@@ -218,13 +218,11 @@ function AbComparison({ variants, significance }) {
                   <div className="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Revenue</div>
                   <div className="font-headline-sm text-on-surface">{inrCompact(v.revenue)}</div>
                 </div>
-                {v.roi_pct != null && (
+                {v.roas != null && (
                   <div className="text-right">
                      <div className="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">ROAS</div>
-                     <div className={`font-label-md ${v.roi_pct >= 0 ? "text-sage" : "text-error"}`}>
-                       {v.roi_pct >= 100 
-                         ? `${Math.round(v.roi_pct / 100).toLocaleString("en-IN")}×` 
-                         : `${v.roi_pct >= 0 ? "+" : ""}${v.roi_pct}%`}
+                     <div className={`font-label-md ${v.roas >= 1 ? "text-sage" : "text-error"}`}>
+                       {v.roas}× <span className="text-on-surface-variant font-normal">return</span>
                      </div>
                   </div>
                 )}

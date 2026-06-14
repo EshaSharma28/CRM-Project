@@ -192,19 +192,29 @@ def tick(db) -> None:
     db.commit()
 
 
+def scheduled_tick(db) -> None:
+    """Fire any campaigns whose scheduled send time has arrived."""
+    now = _now()
+    due = (
+        db.query(Campaign)
+        .filter(Campaign.status == "scheduled", Campaign.scheduled_at <= now)
+        .all()
+    )
+    for camp in due:
+        camp.status = "sending"
+        db.commit()
+        dispatch_campaign(camp.id)  # resolves audience, fans out, marks sent
+
+
 def _run_loop() -> None:
     while True:
         db = SessionLocal()
-        try:
-            tick(db)
-        except Exception as e:  # keep the worker alive on transient errors
-            print(f"[automation] cart tick error: {e}")
-        try:
-            birthday_tick(db)
-        except Exception as e:
-            print(f"[automation] birthday tick error: {e}")
-        finally:
-            db.close()
+        for name, fn in (("cart", tick), ("birthday", birthday_tick), ("scheduled", scheduled_tick)):
+            try:
+                fn(db)
+            except Exception as e:  # keep the worker alive on transient errors
+                print(f"[automation] {name} tick error: {e}")
+        db.close()
         time.sleep(TICK_SECONDS)
 
 

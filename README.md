@@ -8,9 +8,20 @@ delivery and engagement tracking work.
 
 > Xeno Engineering Take-Home Assignment 2026.
 
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react&logoColor=white)
+![Postgres](https://img.shields.io/badge/Postgres-16-4169E1?logo=postgresql&logoColor=white)
+![AI](https://img.shields.io/badge/AI-Gemini%20%E2%86%92%20Groq%20fallback-8E75B2)
+![Deploy](https://img.shields.io/badge/Deploy-Render%20%2B%20Vercel-46E3B7)
+
+**🔗 Live demo:** https://brewhaus-sigma.vercel.app  ·  **Demo login:** `marketer@brewhaus.coffee` / `brewhaus`
+
+*(Free-tier backend sleeps when idle — first load may take ~40s to wake.)*
+
 ---
 
-## The product bet
+## 🎯 The product bet
 
 A **chat-first, AI-native** CRM — not a generic dashboard with lots of screens.
 AI is woven through the product in all four shapes the brief describes:
@@ -27,7 +38,7 @@ run continuously on live shopper activity.
 
 ---
 
-## Architecture
+## 🏗 Architecture
 
 Three independently deployable services + a Postgres database.
 
@@ -56,7 +67,7 @@ volume, ordering, retries and failures — is the system-design centerpiece.
 
 ---
 
-## The Channel Service (system-design centerpiece)
+## 🔌 The Channel Service (system-design centerpiece)
 
 A separate service that **simulates** a messaging provider (no real delivery):
 
@@ -82,7 +93,7 @@ Robustness we model (the part the brief cares about most):
 
 ---
 
-## Features
+## ✨ Features
 
 - **Ingest** — persona-driven synthetic data (~500 shoppers, ~3k orders) **+ CSV import** (customers & orders), which recomputes derived fields + RFM.
 - **Segment** — validated rule engine (no model-authored SQL), **RFM** scoring + named segments, gender/channel/lifecycle filters.
@@ -96,7 +107,7 @@ Robustness we model (the part the brief cares about most):
 
 ---
 
-## Every screen — what it does & why
+## 🖥 Every screen — what it does & why
 
 | Screen | What it does | Why it exists |
 |---|---|---|
@@ -112,16 +123,21 @@ Robustness we model (the part the brief cares about most):
 | **Activity** | Live channel webhook feed + a **Reconcile lost events** button | Makes the async callback loop (and its self-healing) visible |
 | **Floating assistant** | A global AI helper to ask questions about the data or start a campaign from any screen | Keeps the product chat-first everywhere |
 
-## Tech stack
+## 🛠 Tech stack
 
-- **Backend:** Python · FastAPI · SQLAlchemy · Postgres (SQLite for local dev)
-- **AI:** provider-agnostic layer — **Gemini** primary, **Groq** automatic fallback; **Hugging Face** for images
-- **Frontend:** React · Vite · Tailwind · framer-motion · Recharts
-- **Data:** fully synthetic, persona-driven (no real customer data)
+| Layer | Choice | Why |
+|---|---|---|
+| Backend | **FastAPI** + SQLAlchemy | Async-friendly, typed, fast to ship; one language across CRM + channel |
+| Database | **Postgres** (SQLite locally) | Relational fits the CRM data model; zero-setup local dev |
+| AI | **Gemini → Groq** (provider-agnostic) + **Hugging Face** images | Free tiers; automatic failover so a rate limit never breaks the demo |
+| Frontend | **React + Vite + Tailwind** · framer-motion · Recharts | Fast HMR, utility styling, smooth motion + charts |
+| Channel service | Separate **FastAPI** app | Deliberately isolated to model real provider/callback boundaries |
+| Deploy | **Render** (APIs) + **Neon** (DB) + **Vercel** (web) | All free-tier, Git-connected |
+| Data | Fully synthetic, **persona-driven** | Realistic behaviour to segment on — no real customer data |
 
 ---
 
-## Repo layout
+## 📁 Repo layout
 
 ```
 brewhaus-crm/
@@ -141,7 +157,7 @@ brewhaus-crm/
 
 ---
 
-## Run locally
+## 🚀 Run locally
 
 ```bash
 # 1. Channel service (port 8001)
@@ -166,7 +182,7 @@ points `DATABASE_URL` at Postgres. Demo login: `marketer@brewhaus.coffee` / `bre
 
 ---
 
-## Conscious tradeoffs (what I'd do at scale)
+## ⚖️ Conscious tradeoffs (what I'd do at scale)
 
 - **In-process fan-out → durable queue.** The worker pool models the producer/
   consumer pattern; at scale it becomes Kafka/SQS + autoscaled consumers + a
@@ -182,7 +198,7 @@ points `DATABASE_URL` at Postgres. Demo login: `marketer@brewhaus.coffee` / `bre
 - **Schema.** `create_all` on startup; production would use Alembic migrations.
 - **Auth.** Lightweight demo gate; production needs real auth + multi-brand tenancy.
 
-## Known limitations & honest notes
+## ⚠️ Known limitations & honest notes
 
 Things I consciously left incomplete, and why — so nothing here is a surprise:
 

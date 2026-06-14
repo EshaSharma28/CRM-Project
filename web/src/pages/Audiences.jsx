@@ -157,7 +157,7 @@ export default function Audiences() {
                   className="bg-white border border-[#bcc9cc] hover:border-[#12b1c5] hover:shadow-sm text-left p-4 rounded-xl transition-all group"
                 >
                   <h3 className="font-bold text-on-surface group-hover:text-[#006875] text-sm mb-1">High-Value Churn Risk</h3>
-                  <p className="text-xs text-on-surface-variant line-clamp-2">Spenders > ₹5k currently at risk.</p>
+                  <p className="text-xs text-on-surface-variant line-clamp-2">Spenders &gt; ₹5k currently at risk.</p>
                 </button>
                 <button 
                   onClick={() => {
@@ -168,7 +168,7 @@ export default function Audiences() {
                   className="bg-white border border-[#bcc9cc] hover:border-[#12b1c5] hover:shadow-sm text-left p-4 rounded-xl transition-all group"
                 >
                   <h3 className="font-bold text-on-surface group-hover:text-[#006875] text-sm mb-1">Recent VIPs</h3>
-                  <p className="text-xs text-on-surface-variant line-clamp-2">> 5 orders and bought in last 30 days.</p>
+                  <p className="text-xs text-on-surface-variant line-clamp-2">&gt; 5 orders and bought in last 30 days.</p>
                 </button>
                 <button 
                   onClick={() => {
@@ -179,7 +179,7 @@ export default function Audiences() {
                   className="bg-white border border-[#bcc9cc] hover:border-[#12b1c5] hover:shadow-sm text-left p-4 rounded-xl transition-all group"
                 >
                   <h3 className="font-bold text-on-surface group-hover:text-[#006875] text-sm mb-1">One-Timers to Nudge</h3>
-                  <p className="text-xs text-on-surface-variant line-clamp-2">Only 1 order, > 60 days ago.</p>
+                  <p className="text-xs text-on-surface-variant line-clamp-2">Only 1 order, &gt; 60 days ago.</p>
                 </button>
               </div>
             </div>

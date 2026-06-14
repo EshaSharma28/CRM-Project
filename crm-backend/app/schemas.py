@@ -82,7 +82,7 @@ class SegmentCreateIn(BaseModel):
 
 class CampaignCreateIn(BaseModel):
     name: str
-    segment_id: str
+    segment_id: int
     channel: str
     message_template: str
     message_template_b: str | None = None

@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/brewhaus"
     channel_service_url: str = "http://localhost:8001"
     crm_public_url: str = "http://localhost:8000"
+    # Shared secret to verify signed callbacks from the channel service.
+    webhook_secret: str = "brewhaus-demo-webhook-secret"
 
     ai_provider: str = "gemini"
     gemini_api_key: str = ""

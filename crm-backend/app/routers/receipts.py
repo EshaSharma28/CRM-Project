@@ -161,21 +161,22 @@ async def ingest_receipt(
     x_hub_signature: str = Header(None),
     db: Session = Depends(get_db)
 ):
-    """Ingest one engagement event from the channel service (async callback)."""
-    
-    # Verify HMAC signature
-    if not x_hub_signature or not x_hub_signature.startswith("sha256="):
-        raise HTTPException(status_code=401, detail="Missing or invalid signature header")
-        
-    payload_bytes = await request.body()
-    expected_signature = hmac.new(b"brewhaus_supersecret", payload_bytes, hashlib.sha256).hexdigest()
-    
-    if not hmac.compare_digest(x_hub_signature.replace("sha256=", ""), expected_signature):
-        raise HTTPException(status_code=401, detail="Invalid signature")
+    """Ingest one engagement event from the channel service (async callback).
 
-    import json
-    data = json.loads(payload_bytes)
-    event = ReceiptEvent(**data)
+    The channel signs each callback with a shared-secret HMAC; we verify it over
+    the RAW request bytes before trusting the event — so a forged receipt is
+    rejected. (Reconciliation calls ingest_event() directly, bypassing HTTP.)
+    """
+    from app.config import settings
+
+    payload_bytes = await request.body()
+    if not x_hub_signature or not x_hub_signature.startswith("sha256="):
+        raise HTTPException(401, "Missing or invalid signature header")
+    expected = hmac.new(settings.webhook_secret.encode(), payload_bytes, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(x_hub_signature.removeprefix("sha256="), expected):
+        raise HTTPException(401, "Invalid signature")
+
+    event = ReceiptEvent.model_validate_json(payload_bytes)
 
     occurred_at = datetime.fromisoformat(event.occurred_at).replace(tzinfo=None)
     result = ingest_event(

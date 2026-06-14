@@ -15,6 +15,7 @@ import Analytics from "./pages/Analytics";
 import Import from "./pages/Import";
 import Automations from "./pages/Automations";
 import ActivityFeed from "./pages/ActivityFeed";
+import Settings from "./pages/Settings";
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/shoppers" element={<Shoppers />} />
           <Route path="/import" element={<Import />} />
           <Route path="/activity" element={<ActivityFeed />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </AuthProvider>

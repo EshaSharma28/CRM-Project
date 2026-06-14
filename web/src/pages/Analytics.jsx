@@ -90,11 +90,7 @@ export default function Analytics() {
         const camps = await api.campaigns();
         const active = camps.filter(c => c.status !== 'draft');
         
-        const statsByChannel = {
-          email: { orders: 0, revenue: 0 },
-          sms: { orders: 0, revenue: 0 },
-          whatsapp: { orders: 0, revenue: 0 },
-        };
+        const statsByChannel = {};
 
         const statsPromises = active.map(c => 
           api.stats(c.id).then(s => ({ channel: c.channel, stats: s })).catch(() => null)
@@ -110,11 +106,12 @@ export default function Analytics() {
           if (!res || !res.stats) return;
           const ch = res.channel || 'email';
           const c = active[i];
-          if (!statsByChannel[ch]) statsByChannel[ch] = { orders: 0, revenue: 0 };
+          if (!statsByChannel[ch]) statsByChannel[ch] = { orders: 0, revenue: 0, count: 0 };
           
           const s = res.stats;
           statsByChannel[ch].orders += (s.orders_attributed || 0);
           statsByChannel[ch].revenue += (s.attributed_revenue || 0);
+          statsByChannel[ch].count += 1;
 
           totalSent += (s.sent || 0);
           totalOpened += (s.opened || 0);
@@ -127,7 +124,7 @@ export default function Analytics() {
         });
 
         const formattedStats = Object.entries(statsByChannel)
-          .filter(([_, data]) => data.orders > 0 || data.revenue > 0)
+          .filter(([_, data]) => data.count > 0)
           .map(([channel, data]) => ({ channel, orders: data.orders, revenue: data.revenue }));
 
         setChannelStats(formattedStats);

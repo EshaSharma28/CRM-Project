@@ -16,6 +16,9 @@ reconciliation sweep can later pull the missing events via GET /status/{id}.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import hmac
+import json
 import random
 from datetime import datetime, timedelta, timezone
 
@@ -65,13 +68,12 @@ def _roll_lifecycle(channel: str, rng: random.Random) -> list[str]:
     return events
 
 
-import hmac
-import hashlib
-import json
-
 async def _post_with_retry(client: httpx.AsyncClient, url: str, payload: dict) -> None:
+    # Sign the exact bytes we send so the CRM can verify authenticity (HMAC-SHA256).
     payload_bytes = json.dumps(payload).encode("utf-8")
-    signature = hmac.new(b"brewhaus_supersecret", payload_bytes, hashlib.sha256).hexdigest()
+    signature = hmac.new(
+        settings.webhook_secret.encode(), payload_bytes, hashlib.sha256
+    ).hexdigest()
     headers = {
         "X-Hub-Signature": f"sha256={signature}",
         "Content-Type": "application/json"

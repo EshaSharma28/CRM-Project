@@ -1,5 +1,18 @@
 from datetime import datetime, timezone
+import json
+import hmac
+import hashlib
+
 from app.models import Customer, Campaign, Communication, CommunicationEvent, Order
+
+def post_signed_receipt(client, payload):
+    payload_bytes = json.dumps(payload).encode("utf-8")
+    sig = hmac.new(b"brewhaus_supersecret", payload_bytes, hashlib.sha256).hexdigest()
+    return client.post(
+        "/receipts",
+        content=payload_bytes,
+        headers={"Content-Type": "application/json", "X-Hub-Signature": f"sha256={sig}"}
+    )
 
 def test_ingest_receipt_idempotency(client, db_session):
     # Setup
@@ -19,12 +32,12 @@ def test_ingest_receipt_idempotency(client, db_session):
         "event_type": "sent",
         "occurred_at": datetime.now(timezone.utc).isoformat()
     }
-    resp1 = client.post("/receipts", json=payload)
+    resp1 = post_signed_receipt(client, payload)
     assert resp1.status_code == 200
     assert resp1.json()["status"] == "ok"
 
     # Verify idempotency by sending the exact same payload again
-    resp2 = client.post("/receipts", json=payload)
+    resp2 = post_signed_receipt(client, payload)
     assert resp2.status_code == 200
     assert resp2.json()["status"] == "duplicate"
     
@@ -50,7 +63,7 @@ def test_ingest_receipt_order_tolerance(client, db_session):
         "event_type": "clicked",
         "occurred_at": datetime.now(timezone.utc).isoformat()
     }
-    client.post("/receipts", json=payload1)
+    post_signed_receipt(client, payload1)
     
     db_session.refresh(comm)
     assert comm.status == "clicked"
@@ -63,7 +76,7 @@ def test_ingest_receipt_order_tolerance(client, db_session):
         "event_type": "delivered",
         "occurred_at": datetime.now(timezone.utc).isoformat()
     }
-    client.post("/receipts", json=payload2)
+    post_signed_receipt(client, payload2)
     
     db_session.refresh(comm)
     # Status should still be 'clicked' because it is higher rank, but delivered_at should be populated
@@ -96,7 +109,7 @@ def test_ingest_receipt_attribution(client, db_session):
             "event_type": "clicked",
             "occurred_at": datetime.now(timezone.utc).isoformat()
         }
-        client.post("/receipts", json=payload)
+        post_signed_receipt(client, payload)
         
         db_session.refresh(comm)
         # Should have attributed an order

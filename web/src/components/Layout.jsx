@@ -80,6 +80,7 @@ export default function Layout() {
                   <NavLink
                     key={item.to}
                     to={item.to}
+                    id={`tour-nav-${item.to.replace("/", "") || "dashboard"}`}
                     className={({ isActive }) =>
                       clsx(
                         "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative",
@@ -109,10 +110,21 @@ export default function Layout() {
           {/* Footer Section */}
           <div className="p-4 border-t border-outline-variant bg-surface-container mt-auto">
             <div className="flex flex-col gap-1 mb-4">
-              <button className="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all group w-full text-left">
+              <NavLink 
+                to="/settings"
+                id="tour-nav-settings"
+                className={({ isActive }) =>
+                  clsx(
+                    "flex items-center gap-3 px-4 py-2 rounded-lg transition-all group w-full text-left",
+                    isActive
+                      ? "bg-secondary-container text-on-secondary-container font-bold"
+                      : "text-on-surface-variant hover:bg-surface-container-high"
+                  )
+                }
+              >
                 <span className="material-symbols-outlined text-lg">settings</span>
                 <span className="font-label-md text-label-md">Settings</span>
-              </button>
+              </NavLink>
             </div>
             
             {/* Profile Info */}

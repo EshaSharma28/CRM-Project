@@ -1,0 +1,35 @@
+# Render blueprint — deploys both FastAPI services from their Dockerfiles.
+# Postgres: use a free Neon database (https://neon.tech) and paste its URL into
+# DATABASE_URL (prefix with postgresql+psycopg://). Frontend deploys on Vercel.
+services:
+  - type: web
+    name: brewhaus-channel
+    runtime: docker
+    dockerfilePath: ./channel-service/Dockerfile
+    dockerContext: ./channel-service
+    plan: free
+    envVars:
+      - key: WEBHOOK_SECRET
+        sync: false   # must match the CRM's WEBHOOK_SECRET
+
+  - type: web
+    name: brewhaus-crm
+    runtime: docker
+    dockerfilePath: ./crm-backend/Dockerfile
+    dockerContext: ./crm-backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL          # postgresql+psycopg://...  (Neon)
+        sync: false
+      - key: CHANNEL_SERVICE_URL   # https://brewhaus-channel.onrender.com
+        sync: false
+      - key: CRM_PUBLIC_URL        # this service's own https URL
+        sync: false
+      - key: WEBHOOK_SECRET        # same value as the channel service
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: HF_TOKEN
+        sync: false

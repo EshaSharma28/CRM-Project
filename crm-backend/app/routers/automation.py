@@ -80,6 +80,7 @@ def birthday(db: Session = Depends(get_db)):
             "sent": stats.get("sent", 0),
             "delivered": stats.get("delivered", 0),
             "opened": stats.get("opened", 0),
+            "read": stats.get("read", 0),
             "clicked": stats.get("clicked", 0),
             "orders_attributed": stats.get("orders_attributed", 0),
             "attributed_revenue": stats.get("attributed_revenue", 0),

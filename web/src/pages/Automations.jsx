@@ -153,7 +153,7 @@ export default function Automations() {
             {[
               ["🎉 Birthdays today", bday.birthdays_today, "text-tertiary"],
               ["Offers sent", bday.stats.sent, "text-on-surface"],
-              ["Clicked", bday.stats.clicked, "text-primary"],
+              ["Read", (bday.stats.read || 0) + (bday.stats.opened || 0), "text-primary"],
               ["Revenue", "₹" + Math.round(bday.stats.attributed_revenue || 0).toLocaleString("en-IN"), "text-green-700"],
             ].map(([label, val, cls]) => (
               <div key={label} className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/30">

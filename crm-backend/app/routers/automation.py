@@ -95,6 +95,39 @@ def toggle_birthday(payload: ToggleIn, db: Session = Depends(get_db)):
     return {"enabled": auto.enabled}
 
 
+@router.post("/birthday/reset")
+def reset_birthday(db: Session = Depends(get_db)):
+    """Clear the birthday automation's send history so it re-sends fresh.
+
+    The once-a-year guard (last_birthday_year) intentionally prevents resending
+    a birthday offer twice in a year. This demo/ops control wipes that guard and
+    deletes the automation's prior communications, so the next tick re-greets
+    today's birthday shoppers — useful after a callback-config change left old
+    sends stranded.
+    """
+    from app.models import Communication, CommunicationEvent
+
+    auto = ensure_birthday(db)
+    comm_ids = []
+    if auto.campaign_id:
+        comm_ids = [
+            cid for (cid,) in db.query(Communication.id)
+            .filter(Communication.campaign_id == auto.campaign_id).all()
+        ]
+        if comm_ids:
+            db.query(CommunicationEvent).filter(
+                CommunicationEvent.communication_id.in_(comm_ids)
+            ).delete(synchronize_session=False)
+            db.query(Communication).filter(
+                Communication.id.in_(comm_ids)
+            ).delete(synchronize_session=False)
+    db.query(Customer).filter(Customer.last_birthday_year.isnot(None)).update(
+        {Customer.last_birthday_year: None}, synchronize_session=False
+    )
+    db.commit()
+    return {"reset": True, "cleared_communications": len(comm_ids)}
+
+
 @router.post("/abandoned-cart/toggle")
 def toggle(payload: ToggleIn, db: Session = Depends(get_db)):
     auto = ensure_automation(db)

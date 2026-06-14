@@ -180,6 +180,14 @@ npm run dev
 Local dev uses SQLite (`DATABASE_URL=sqlite:///./brewhaus_dev.db`); production
 points `DATABASE_URL` at Postgres. Demo login: `marketer@brewhaus.coffee` / `brewhaus`.
 
+**Tests** (CRM backend):
+```bash
+cd crm-backend && . .venv/bin/activate
+env PYTHONPATH=. pytest        # segmentation, receipts (HMAC/idempotency/order), campaigns
+```
+
+**Deploy:** see [DEPLOY.md](DEPLOY.md) (Render + Neon + Vercel, all free tier).
+
 ---
 
 ## Conscious tradeoffs (what I'd do at scale)

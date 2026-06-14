@@ -30,3 +30,4 @@ dist/
 *.sqlite3-*
 web-claude/
 VIDEO_SCRIPT.md
+*.db-shm

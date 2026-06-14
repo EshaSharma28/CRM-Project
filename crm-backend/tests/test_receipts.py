@@ -3,11 +3,12 @@ import json
 import hmac
 import hashlib
 
+from app.config import settings
 from app.models import Customer, Campaign, Communication, CommunicationEvent, Order
 
 def post_signed_receipt(client, payload):
     payload_bytes = json.dumps(payload).encode("utf-8")
-    sig = hmac.new(b"brewhaus_supersecret", payload_bytes, hashlib.sha256).hexdigest()
+    sig = hmac.new(settings.webhook_secret.encode(), payload_bytes, hashlib.sha256).hexdigest()
     return client.post(
         "/receipts",
         content=payload_bytes,

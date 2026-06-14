@@ -37,31 +37,24 @@ export default function Automations() {
   const [toggling, setToggling] = useState(false);
   const [triggerTime, setTriggerTime] = useState("2 hours");
   const [showOptHub, setShowOptHub] = useState(false);
+  const [opt, setOpt] = useState({ by_segment: [], by_product: [] });
   const timer = useRef(null);
 
-  const timingData = [
-    { time: "15m", recovery: 42 },
-    { time: "1h", recovery: 28 },
-    { time: "2h", recovery: 15 },
-    { time: "12h", recovery: 8 },
-    { time: "24h", recovery: 5 },
-  ];
-
-  const segmentData = [
-    { segment: "Champions", abandoned: 120, recovered: 90 },
-    { segment: "Loyal", abandoned: 200, recovered: 110 },
-    { segment: "New", abandoned: 150, recovered: 45 },
-    { segment: "At Risk", abandoned: 300, recovered: 30 },
-  ];
+  // Real, live breakdowns from cart_events (see /abandoned-cart/optimization).
+  const segmentData = opt.by_segment;
+  const productData = opt.by_product;
 
   async function refresh() {
     try {
-      const [d, cs, b] = await Promise.all([
-        api.automationCart(), api.automationCarts(18), api.birthdayAutomation().catch(() => null),
+      const [d, cs, b, o] = await Promise.all([
+        api.automationCart(), api.automationCarts(18),
+        api.birthdayAutomation().catch(() => null),
+        api.cartOptimization().catch(() => null),
       ]);
       setData(d);
       setCarts(cs);
       if (b) setBday(b);
+      if (o) setOpt(o);
     } catch { /* ignore */ }
   }
 
@@ -243,14 +236,14 @@ export default function Automations() {
         >
           <div className="absolute inset-0 pt-12 opacity-60 group-hover:opacity-100 transition-opacity duration-700">
              <ResponsiveContainer width="100%" height="100%">
-               <AreaChart data={timingData}>
+               <AreaChart data={segmentData}>
                  <defs>
                    <linearGradient id="colorRecCard" x1="0" y1="0" x2="0" y2="1">
                      <stop offset="5%" stopColor="#12b1c5" stopOpacity={0.6}/>
                      <stop offset="95%" stopColor="#12b1c5" stopOpacity={0}/>
                    </linearGradient>
                  </defs>
-                 <Area type="monotone" dataKey="recovery" stroke="#12b1c5" strokeWidth={3} fillOpacity={1} fill="url(#colorRecCard)" />
+                 <Area type="monotone" dataKey="recovered" stroke="#12b1c5" strokeWidth={3} fillOpacity={1} fill="url(#colorRecCard)" />
                </AreaChart>
              </ResponsiveContainer>
           </div>
@@ -418,34 +411,36 @@ export default function Automations() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Chart 1: Timing */}
+                {/* Chart 1: Products (real) */}
                 <div className="bg-[#f8f3e8] p-6 rounded-2xl border border-[#bcc9cc] shadow-sm">
-                  <h3 className="font-headline-md font-bold text-on-surface mb-1">Recovery by Delay Time</h3>
-                  <p className="text-sm text-on-surface-variant mb-8">When do shoppers convert after abandonment?</p>
+                  <h3 className="font-headline-md font-bold text-on-surface mb-1">Recovery by Product</h3>
+                  <p className="text-sm text-on-surface-variant mb-8">Which abandoned products convert after a nudge.</p>
                   <div className="h-72">
+                    {productData.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-sm text-on-surface-variant">No cart activity yet.</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={timingData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorRec" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#12b1c5" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="#12b1c5" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#bcc9cc" />
-                        <XAxis dataKey="time" tick={{fontSize: 12, fill: "#77574d"}} axisLine={false} tickLine={false} />
-                        <YAxis tick={{fontSize: 12, fill: "#77574d"}} axisLine={false} tickLine={false} />
-                        <RechartsTooltip cursor={{ stroke: '#bcc9cc', strokeWidth: 1 }} contentStyle={{ borderRadius: '12px', border: '1px solid #bcc9cc', backgroundColor: '#fff', padding: '12px' }} />
-                        <Area type="monotone" dataKey="recovery" stroke="#12b1c5" strokeWidth={4} fillOpacity={1} fill="url(#colorRec)" name="Recovered Carts (%)" />
-                      </AreaChart>
+                      <BarChart data={productData} layout="vertical" margin={{ top: 10, right: 10, left: 40, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#bcc9cc" />
+                        <XAxis type="number" tick={{fontSize: 12, fill: "#77574d"}} axisLine={false} tickLine={false} />
+                        <YAxis type="category" dataKey="product" width={130} tick={{fontSize: 10, fill: "#77574d"}} axisLine={false} tickLine={false} />
+                        <RechartsTooltip cursor={{ fill: 'rgba(119, 87, 77, 0.05)' }} contentStyle={{ borderRadius: '12px', border: '1px solid #bcc9cc', backgroundColor: '#fff', padding: '12px' }} />
+                        <Bar dataKey="abandoned" fill="#d6b884" radius={[0,6,6,0]} name="Abandoned" />
+                        <Bar dataKey="recovered" fill="#006875" radius={[0,6,6,0]} name="Recovered" />
+                      </BarChart>
                     </ResponsiveContainer>
+                    )}
                   </div>
                 </div>
 
-                {/* Chart 2: Segments */}
+                {/* Chart 2: Segments (real) */}
                 <div className="bg-[#f8f3e8] p-6 rounded-2xl border border-[#bcc9cc] shadow-sm">
                   <h3 className="font-headline-md font-bold text-on-surface mb-1">Audience Breakdown</h3>
                   <p className="text-sm text-on-surface-variant mb-8">Abandonment vs Recovery by RFM segment.</p>
                   <div className="h-72">
+                    {segmentData.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-sm text-on-surface-variant">No cart activity yet.</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={segmentData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#bcc9cc" />
@@ -456,6 +451,7 @@ export default function Automations() {
                         <Bar dataKey="recovered" fill="#006875" radius={[6,6,0,0]} name="Recovered" />
                       </BarChart>
                     </ResponsiveContainer>
+                    )}
                   </div>
                 </div>
               </div>

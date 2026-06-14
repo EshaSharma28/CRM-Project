@@ -57,6 +57,7 @@ export const api = {
   automationToggle: (enabled) =>
     req("/automations/abandoned-cart/toggle", { method: "POST", body: JSON.stringify({ enabled }) }),
   automationCarts: (limit = 20) => req(`/automations/abandoned-cart/carts?limit=${limit}`),
+  cartOptimization: () => req("/automations/abandoned-cart/optimization"),
   birthdayAutomation: () => req("/automations/birthday"),
   birthdayToggle: (enabled) =>
     req("/automations/birthday/toggle", { method: "POST", body: JSON.stringify({ enabled }) }),

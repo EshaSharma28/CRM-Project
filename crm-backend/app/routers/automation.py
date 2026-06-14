@@ -137,6 +137,42 @@ def toggle(payload: ToggleIn, db: Session = Depends(get_db)):
     return {"enabled": auto.enabled}
 
 
+@router.get("/abandoned-cart/optimization")
+def cart_optimization(db: Session = Depends(get_db)):
+    """Real cart-recovery breakdowns for the Optimization Hub.
+
+    "abandoned" = carts that triggered a recovery nudge (status recovery_sent or
+    recovered); "recovered" = the subset that converted after the nudge. Computed
+    live from cart_events joined to the shopper's RFM segment and the product.
+    """
+    ABANDONED = ("recovery_sent", "recovered")
+
+    def _breakdown(group_col):
+        rows = (
+            db.query(group_col, CartEvent.status, func.count(CartEvent.id))
+            .join(Customer, Customer.id == CartEvent.customer_id)
+            .filter(CartEvent.status.in_(ABANDONED))
+            .group_by(group_col, CartEvent.status)
+            .all()
+        )
+        agg: dict[str, dict[str, int]] = {}
+        for key, status, n in rows:
+            bucket = agg.setdefault(key or "Unknown", {"abandoned": 0, "recovered": 0})
+            bucket["abandoned"] += n
+            if status == "recovered":
+                bucket["recovered"] += n
+        return agg
+
+    by_segment = _breakdown(Customer.rfm_segment)
+    by_product = _breakdown(CartEvent.product)
+
+    seg = [{"segment": k, **v} for k, v in by_segment.items()]
+    seg.sort(key=lambda r: r["abandoned"], reverse=True)
+    prod = [{"product": k, **v} for k, v in by_product.items()]
+    prod.sort(key=lambda r: r["abandoned"], reverse=True)
+    return {"by_segment": seg, "by_product": prod[:6]}
+
+
 @router.get("/abandoned-cart/carts")
 def recent_carts(limit: int = 25, db: Session = Depends(get_db)):
     rows = (

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, X, Send, Bot, User, BarChart2 } from "lucide-react";
+import { Sparkles, X, Send, Bot, User, BarChart2, RotateCcw } from "lucide-react";
 import { api } from "../api";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
@@ -22,14 +22,19 @@ const CremaIcon = ({ className }) => (
 export default function FloatingAgent() {
   const navigate = useNavigate();
   const location = useLocation();
+  const GREETING = {
+    role: "agent",
+    text: "Hi! I'm Crema. Sip your coffee, till I work for you. How can I help you today?",
+  };
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      role: "agent",
-      text: "Hi! I'm Crema. Sip your coffee, till I work for you. How can I help you today?",
-    },
-  ]);
+  const [messages, setMessages] = useState([GREETING]);
+
+  function resetChat() {
+    setQuery("");
+    setThinking(false);
+    setMessages([GREETING]);
+  }
   const [thinking, setThinking] = useState(false);
   const messagesEndRef = useRef(null);
 
@@ -148,12 +153,23 @@ export default function FloatingAgent() {
                 <CremaIcon className="w-6 h-6 text-caramel" />
                 <h3 className="font-serif font-bold">Crema AI Agent</h3>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-white/60 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={resetChat}
+                  disabled={messages.length <= 1 && !thinking}
+                  title="Start a new chat"
+                  className="text-white/60 hover:text-white transition-colors disabled:opacity-30 disabled:hover:text-white/60 p-1"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  title="Close"
+                  className="text-white/60 hover:text-white transition-colors p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Chat Area */}

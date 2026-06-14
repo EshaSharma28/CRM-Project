@@ -29,3 +29,4 @@ dist/
 *.db-*
 *.sqlite3-*
 web-claude/
+VIDEO_SCRIPT.md

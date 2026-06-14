@@ -21,7 +21,7 @@ delivery and engagement tracking work.
 
 ---
 
-## 🎯 The product bet
+## The product bet
 
 A **chat-first, AI-native** CRM — not a generic dashboard with lots of screens.
 AI is woven through the product in all four shapes the brief describes:
@@ -38,7 +38,7 @@ run continuously on live shopper activity.
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 Three independently deployable services + a Postgres database.
 
@@ -67,7 +67,7 @@ volume, ordering, retries and failures — is the system-design centerpiece.
 
 ---
 
-## 🔌 The Channel Service (system-design centerpiece)
+## The Channel Service (system-design centerpiece)
 
 A separate service that **simulates** a messaging provider (no real delivery):
 
@@ -93,7 +93,7 @@ Robustness we model (the part the brief cares about most):
 
 ---
 
-## ✨ Features
+## Features
 
 - **Ingest** — persona-driven synthetic data (~500 shoppers, ~3k orders) **+ CSV import** (customers & orders), which recomputes derived fields + RFM.
 - **Segment** — validated rule engine (no model-authored SQL), **RFM** scoring + named segments, gender/channel/lifecycle filters.
@@ -107,7 +107,7 @@ Robustness we model (the part the brief cares about most):
 
 ---
 
-## 🖥 Every screen — what it does & why
+## Every screen — what it does & why
 
 | Screen | What it does | Why it exists |
 |---|---|---|
@@ -123,7 +123,7 @@ Robustness we model (the part the brief cares about most):
 | **Activity** | Live channel webhook feed + a **Reconcile lost events** button | Makes the async callback loop (and its self-healing) visible |
 | **Floating assistant** | A global AI helper to ask questions about the data or start a campaign from any screen | Keeps the product chat-first everywhere |
 
-## 🛠 Tech stack
+## Tech stack
 
 | Layer | Choice | Why |
 |---|---|---|
@@ -137,7 +137,7 @@ Robustness we model (the part the brief cares about most):
 
 ---
 
-## 📁 Repo layout
+## Repo layout
 
 ```
 brewhaus-crm/
@@ -157,7 +157,7 @@ brewhaus-crm/
 
 ---
 
-## 🚀 Run locally
+## Run locally
 
 ```bash
 # 1. Channel service (port 8001)
@@ -182,7 +182,7 @@ points `DATABASE_URL` at Postgres. Demo login: `marketer@brewhaus.coffee` / `bre
 
 ---
 
-## ⚖️ Conscious tradeoffs (what I'd do at scale)
+## Conscious tradeoffs (what I'd do at scale)
 
 - **In-process fan-out → durable queue.** The worker pool models the producer/
   consumer pattern; at scale it becomes Kafka/SQS + autoscaled consumers + a
@@ -198,7 +198,7 @@ points `DATABASE_URL` at Postgres. Demo login: `marketer@brewhaus.coffee` / `bre
 - **Schema.** `create_all` on startup; production would use Alembic migrations.
 - **Auth.** Lightweight demo gate; production needs real auth + multi-brand tenancy.
 
-## ⚠️ Known limitations & honest notes
+## Known limitations & honest notes
 
 Things I consciously left incomplete, and why — so nothing here is a surprise:
 

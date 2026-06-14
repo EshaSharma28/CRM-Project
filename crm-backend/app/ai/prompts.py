@@ -17,6 +17,7 @@ SEGMENTABLE_FIELDS = """
   New, Promising, Needs Attention, At Risk, Can't Lose Them, Hibernating, Lost)
 - r_score, f_score, m_score (RFM recency/frequency/monetary scores, each 1-5; 5 is best)
 - city (string)
+- gender (female|male|other|unknown)
 - channel_pref (whatsapp|email|sms|rcs)
 
 Prefer rfm_segment when the goal maps to a known marketing segment (e.g. "reward our
@@ -90,6 +91,13 @@ Respond as JSON:
     "message_draft": "message text with {{first_name}}"
   }}
 }}
+"""
+
+IMAGE_PROMPT = """Write a SHORT (under 20 words) vivid image-generation prompt for a
+photoreal lifestyle photo to accompany this Brewhaus specialty-coffee marketing
+message. Describe scene/mood/lighting. No quotes, no preamble, just the prompt.
+
+Message: {message}
 """
 
 DRAFT_MESSAGE = """Write a short, warm marketing message for Brewhaus (coffee brand).
@@ -170,7 +178,7 @@ Output JSON:
   "metric": one of the metrics valid for the chosen entity (see above),
   "rules": [{{"field": "...", "op": "gt|lt|gte|lte|eq|in", "value": ...}}],  // filter; [] for all
   "time_window_days": null | <int>,   // e.g. 30 for "last 30 days" / "this month" -> 30
-  "group_by": null | "city" | "lifecycle_stage" | "rfm_segment" | "channel_pref"
+  "group_by": null | "city" | "gender" | "lifecycle_stage" | "rfm_segment" | "channel_pref"
               | "product" | "is_subscription" | "month" | "weekday"
 }}
 Notes:

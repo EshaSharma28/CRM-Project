@@ -25,6 +25,7 @@ from app.services.segmentation import build_filters
 # Customer columns usable for grouping (shared by both entities via the join).
 CUSTOMER_DIMS = {
     "city": Customer.city,
+    "gender": Customer.gender,
     "lifecycle_stage": Customer.lifecycle_stage,
     "rfm_segment": Customer.rfm_segment,
     "channel_pref": Customer.channel_pref,

@@ -26,7 +26,7 @@ from app.services.rfm import recompute_rfm
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 
 CUSTOMER_SAMPLE = (
-    "name,email,phone,city,channel_pref,signup_date\n"
+    "name,email,phone,city,channel_pref,signup_date,dob,gender\n"
     "Priya Menon,priya@example.com,+919800000001,Mumbai,whatsapp,2025-02-10\n"
     "Arjun Rao,arjun@example.com,+919800000002,Bengaluru,email,2025-04-01\n"
 )
@@ -97,6 +97,10 @@ def ingest_customers(file: UploadFile, db: Session = Depends(get_db)):
         customer.channel_pref = (row.get("channel_pref") or "email").strip().lower()
         if row.get("signup_date"):
             customer.signup_date = _to_date(row.get("signup_date")) or customer.signup_date
+        if row.get("dob"):
+            customer.dob = _to_date(row.get("dob")) or customer.dob
+        if row.get("gender"):
+            customer.gender = (row.get("gender") or "unknown").strip().lower()
 
     db.commit()
     for c in db.query(Customer).all():

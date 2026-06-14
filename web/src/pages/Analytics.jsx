@@ -1,9 +1,48 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
-import { Sparkles, Search, TrendingUp, BarChart2, DollarSign, Activity, Filter, Award, Percent } from "lucide-react";
+import { Search, TrendingUp, DollarSign, Activity, Filter, Award, Percent, ChevronDown, Mail, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 import CountUp from "../components/CountUp";
+
+const CremaIcon = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M15 4.5C15 3.11929 13.8807 2 12.5 2C11.433 2 10.523 2.6685 10.1614 3.60682C9.7997 2.6685 8.88972 2 7.82276 2C6.44205 2 5.32275 3.11929 5.32275 4.5C5.32275 6.0967 6.7471 7.6432 9.3621 9.9407C9.7937 10.3201 10.4552 10.3201 10.8867 9.9407C13.5017 7.6432 14.9261 6.0967 15.0361 4.5H15Z" />
+    <path d="M4 11H16V14C16 17.3137 13.3137 20 10 20C6.68629 20 4 17.3137 4 14V11Z" />
+    <path d="M16 11V15H17.5C18.8807 15 20 13.8807 20 12.5C20 11.1193 18.8807 10 17.5 10H16V11Z" />
+    <path d="M2 21C2 20.4477 2.44772 20 3 20H17C17.5523 20 18 20.4477 18 21C18 21.5523 17.5523 22 17 22H3C2.44772 22 2 21.5523 2 21Z" />
+  </svg>
+);
+
+const BgBeans = ({ className }) => (
+  <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M100 50 C120 10, 180 30, 170 80 C160 130, 110 140, 80 100 C50 60, 80 90, 100 50 Z" />
+    <path d="M160 45 C130 55, 100 80, 100 115" />
+    <path d="M40 100 C70 50, 140 80, 120 140 C100 200, 30 180, 20 130 C10 80, 10 150, 40 100 Z" />
+    <path d="M115 105 C80 110, 50 130, 45 165" />
+  </svg>
+);
+
+const BgCup = ({ className }) => (
+  <svg viewBox="0 0 200 250" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M45 40 L65 15 L95 15 C100 15, 105 20, 110 20 C115 20, 120 15, 125 15 L145 15 L155 40" />
+    <rect x="25" y="40" width="150" height="20" rx="4" />
+    <path d="M35 60 L55 230 C57 240, 65 245, 75 245 H125 C135 245, 143 240, 145 230 L165 60" />
+    <path d="M75 145 C95 130, 115 150, 100 170 C85 190, 60 180, 65 155 C70 130, 55 160, 75 145 Z" />
+    <path d="M95 140 C80 150, 75 165, 80 175" />
+    <path d="M95 125 C115 110, 135 130, 120 150 C105 170, 80 160, 85 135 C90 110, 75 140, 95 125 Z" />
+    <path d="M115 120 C100 130, 95 145, 100 155" />
+  </svg>
+);
+
+const BgSteamTall = ({ className }) => (
+  <svg viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M40 180 C 10 160, 20 120, 30 90 C 40 60, 10 40, 20 10 C 25 -5, 40 5, 30 20" />
+    <path d="M60 190 C 50 150, 80 120, 60 80 C 40 40, 60 20, 80 40 C 90 50, 80 70, 70 60" />
+    <path d="M20 140 C 0 120, 50 100, 35 60" />
+  </svg>
+);
 
 const EXAMPLES = [
   "Which city has the most at-risk shoppers?",
@@ -27,10 +66,10 @@ const fmt = (metric, v) =>
   (CURRENCY_METRICS.has(metric) ? "₹" : "") + Math.round(v).toLocaleString("en-IN");
 
 const CHANNEL_COLORS = {
-  email: "#8FA587",
-  sms: "#BE7E50",
-  whatsapp: "#D69A52",
-  rcs: "#4A3525"
+  email: "#006875",
+  sms: "#346572",
+  whatsapp: "#bf998d",
+  rcs: "#77574d"
 };
 
 export default function Analytics() {
@@ -75,16 +114,16 @@ export default function Analytics() {
           
           const s = res.stats;
           statsByChannel[ch].orders += (s.orders_attributed || 0);
-          statsByChannel[ch].revenue += (s.revenue || 0);
+          statsByChannel[ch].revenue += (s.attributed_revenue || 0);
 
           totalSent += (s.sent || 0);
           totalOpened += (s.opened || 0);
           totalClicked += (s.clicked || 0);
           totalOrders += (s.orders_attributed || 0);
-          totalRevenue += (s.revenue || 0);
+          totalRevenue += (s.attributed_revenue || 0);
           totalCost += (s.sent || 0) * (costs[ch] || 0.02);
 
-          allCampaigns.push({ ...c, revenue: s.revenue || 0, orders: s.orders_attributed || 0 });
+          allCampaigns.push({ ...c, revenue: s.attributed_revenue || 0, orders: s.orders_attributed || 0 });
         });
 
         const formattedStats = Object.entries(statsByChannel)
@@ -122,111 +161,154 @@ export default function Analytics() {
   const roas = globalTotals.cost > 0 ? (globalTotals.revenue / globalTotals.cost) : 0;
   
   const funnelData = [
-    { name: "Sent", value: globalTotals.sent, fill: "#BE7E50" },
-    { name: "Opened", value: globalTotals.opened, fill: "#8FA587" },
-    { name: "Clicked", value: globalTotals.clicked, fill: "#D69A52" },
-    { name: "Orders", value: globalTotals.orders, fill: "#4A3525" },
+    { name: "Sent", value: globalTotals.sent, fill: "#bf998d" },
+    { name: "Opened", value: globalTotals.opened, fill: "#346572" },
+    { name: "Clicked", value: globalTotals.clicked, fill: "#12b1c5" },
+    { name: "Orders", value: globalTotals.orders, fill: "#006875" },
   ];
 
   return (
-    <div className="max-w-6xl mx-auto py-6 space-y-8">
-      
+    <div className="relative max-w-6xl mx-auto py-6 space-y-8 pb-32">
+      {/* Background Watermarks */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden flex justify-between items-center px-10">
+        <BgBeans className="absolute top-20 left-10 w-[400px] h-[400px] text-[#77574d] opacity-[0.05] -rotate-12" />
+        <BgCup className="absolute bottom-10 right-20 w-[350px] h-[450px] text-[#77574d] opacity-[0.05] rotate-12" />
+        <BgSteamTall className="absolute top-[30%] right-[30%] w-[300px] h-[600px] text-[#77574d] opacity-[0.03]" />
+      </div>
+
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-serif font-bold text-mocha-dark">Analytics Studio</h1>
-        <p className="text-text/60 mt-1">Global campaign performance and AI-assisted data exploration.</p>
+      <div className="relative z-10">
+        <h1 className="font-headline-xl text-4xl font-bold text-on-surface">Analytics Studio</h1>
+        <p className="text-on-surface-variant font-label-md mt-1">Global campaign performance and AI-assisted data exploration.</p>
       </div>
 
       {/* Global Stats Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <h2 className="text-lg font-serif font-bold mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-caramel" /> Orders by Channel
-          </h2>
-          <div className="h-64">
+        <div className="bg-[#f8f3e8] border border-[#bcc9cc] rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-headline-md font-bold text-on-surface">
+              Orders by Channel
+            </h2>
+          </div>
+          
+          <div className="flex-1 flex flex-col justify-center">
             {statsLoading ? (
               <div className="h-full w-full shimmer-bg rounded-lg"></div>
             ) : channelStats.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={channelStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EADFD2" />
-                  <XAxis dataKey="channel" tick={{ fontSize: 12, fill: "#978573" }} tickFormatter={(val) => val.charAt(0).toUpperCase() + val.slice(1)} />
-                  <YAxis tick={{ fontSize: 12, fill: "#978573" }} />
-                  <RechartsTooltip cursor={{ fill: "rgba(190,126,80,0.05)" }} />
-                  <Bar dataKey="orders" radius={[4, 4, 0, 0]}>
-                    {channelStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CHANNEL_COLORS[entry.channel] || "#BE7E50"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              (() => {
+                const maxOrders = Math.max(...channelStats.map(c => c.orders));
+                const names = {
+                  email: "Email Marketing",
+                  sms: "SMS Broadcasts",
+                  whatsapp: "WhatsApp Flows",
+                  rcs: "RCS Messaging"
+                };
+                return channelStats.map((c, i) => (
+                  <div key={c.channel} className="mb-6 last:mb-0">
+                    <div className="flex justify-between items-end mb-3">
+                      <span className="text-on-surface-variant font-medium text-base">{names[c.channel] || c.channel}</span>
+                      <span className="text-on-surface font-bold text-base">{c.orders.toLocaleString('en-IN')} Orders</span>
+                    </div>
+                    <div className="h-7 w-full rounded-lg border border-[#bcc9cc] bg-transparent p-[2px]">
+                      <div 
+                        className="h-full rounded-md" 
+                        style={{ 
+                          width: `${maxOrders > 0 ? Math.max((c.orders / maxOrders) * 100, 2) : 0}%`,
+                          backgroundColor: CHANNEL_COLORS[c.channel] || "#12b1c5"
+                        }} 
+                      />
+                    </div>
+                  </div>
+                ));
+              })()
             ) : (
-              <div className="h-full flex items-center justify-center text-text/50">No campaign data available.</div>
+              <div className="h-full flex items-center justify-center text-on-surface-variant font-medium">No campaign data available.</div>
             )}
           </div>
         </div>
 
-        <div className="card">
-          <h2 className="text-lg font-serif font-bold mb-4 flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-sage" /> Revenue by Channel (₹)
-          </h2>
-          <div className="h-64">
+        <div className="bg-[#f8f3e8] border border-[#bcc9cc] rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow flex flex-col relative z-10">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-headline-md font-bold text-on-surface">
+              Revenue by Channel
+            </h2>
+          </div>
+          
+          <div className="flex-1 flex justify-around items-end h-48 mt-4">
             {statsLoading ? (
               <div className="h-full w-full shimmer-bg rounded-lg"></div>
             ) : channelStats.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={channelStats} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EADFD2" />
-                  <XAxis dataKey="channel" tick={{ fontSize: 12, fill: "#978573" }} tickFormatter={(val) => val.charAt(0).toUpperCase() + val.slice(1)} />
-                  <YAxis tick={{ fontSize: 12, fill: "#978573" }} tickFormatter={(val) => `₹${val >= 1000 ? (val/1000).toFixed(1)+'k' : val}`} />
-                  <RechartsTooltip cursor={{ fill: "rgba(143,165,135,0.05)" }} formatter={(val) => `₹${Math.round(val).toLocaleString('en-IN')}`} />
-                  <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
-                    {channelStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CHANNEL_COLORS[entry.channel] || "#8FA587"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              (() => {
+                const maxRev = Math.max(...channelStats.map(c => c.revenue));
+                const names = {
+                  email: "Email",
+                  sms: "SMS",
+                  whatsapp: "WhatsApp",
+                  rcs: "RCS"
+                };
+                return channelStats.map((c, i) => (
+                  <div key={c.channel} className="flex flex-col items-center justify-end h-full gap-2 w-16">
+                    <span className="text-on-surface font-bold text-sm">₹{(c.revenue/1000).toFixed(1)}k</span>
+                    <div className="w-10 rounded-t-lg border border-[#bcc9cc] border-b-0 bg-transparent p-[2px] flex flex-col justify-end" style={{ height: '100%' }}>
+                      <div 
+                        className="w-full rounded-t-md" 
+                        style={{ 
+                          height: `${maxRev > 0 ? Math.max((c.revenue / maxRev) * 100, 5) : 0}%`,
+                          backgroundColor: CHANNEL_COLORS[c.channel] || "#12b1c5"
+                        }} 
+                      />
+                    </div>
+                    <span className="text-on-surface-variant font-medium text-sm">{names[c.channel] || c.channel}</span>
+                  </div>
+                ));
+              })()
             ) : (
-              <div className="h-full flex items-center justify-center text-text/50">No campaign data available.</div>
+              <div className="h-full flex items-center justify-center text-on-surface-variant font-medium">No campaign data available.</div>
             )}
           </div>
         </div>
       </div>
 
       {/* Funnel & Leaderboard */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="card lg:col-span-2">
-          <h2 className="text-lg font-serif font-bold mb-4 flex items-center gap-2">
-            <Filter className="w-5 h-5 text-mocha" /> Global Engagement Funnel
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+        <div className="bg-[#f8f3e8] border border-[#bcc9cc] rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow lg:col-span-2 flex flex-col">
+          <h2 className="text-2xl font-headline-md font-bold mb-8 text-on-surface">
+            Global Engagement Funnel
           </h2>
-          <div className="h-64">
+          <div className="flex-1 flex flex-col justify-center">
             {statsLoading ? (
               <div className="h-full w-full shimmer-bg rounded-lg"></div>
             ) : globalTotals.sent > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={funnelData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#EADFD2" />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 12, fill: "#978573" }} axisLine={false} tickLine={false} />
-                  <RechartsTooltip cursor={{ fill: "rgba(190,126,80,0.05)" }} />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                    {funnelData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              (() => {
+                const maxVal = globalTotals.sent;
+                return funnelData.map((d, i) => (
+                  <div key={d.name} className="mb-6 last:mb-0">
+                    <div className="flex justify-between items-end mb-3">
+                      <span className="text-on-surface-variant font-medium text-base">{d.name}</span>
+                      <span className="text-on-surface font-bold text-base">{d.value.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="h-7 w-full rounded-lg border border-[#bcc9cc] bg-transparent p-[2px]">
+                      <div 
+                        className="h-full rounded-md" 
+                        style={{ 
+                          width: `${maxVal > 0 ? Math.max((d.value / maxVal) * 100, 1) : 0}%`,
+                          backgroundColor: d.fill
+                        }} 
+                      />
+                    </div>
+                  </div>
+                ));
+              })()
             ) : (
-              <div className="h-full flex items-center justify-center text-text/50">No funnel data available.</div>
+              <div className="h-full flex items-center justify-center text-on-surface-variant font-medium">No funnel data available.</div>
             )}
           </div>
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="card flex-1 flex flex-col justify-center items-center text-center">
-            <Percent className="w-8 h-8 text-success mb-2 opacity-50" />
-            <h2 className="text-sm font-bold text-text/60 uppercase tracking-wider mb-1">Estimated ROAS</h2>
+          <div className="bg-[#ece8dd] border border-[#bcc9cc] rounded-2xl p-6 flex-1 flex flex-col justify-center items-center text-center shadow-sm">
+            <Percent className="w-8 h-8 text-[#006875] mb-4 opacity-80" />
+            <h2 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Estimated ROAS</h2>
             {statsLoading ? (
                <div className="w-24 h-10 shimmer-bg rounded-lg mt-2"></div>
             ) : (
@@ -245,83 +327,101 @@ export default function Analytics() {
       </div>
 
       {/* Top Campaigns Table */}
-      <div className="card p-0 overflow-hidden">
-        <div className="p-4 border-b border-border bg-surface/50">
-          <h2 className="text-lg font-serif font-bold flex items-center gap-2">
-            <Award className="w-5 h-5 text-warning" /> Top 5 Campaigns Leaderboard
+      <div className="bg-[#f8f3e8] border border-[#bcc9cc] rounded-2xl p-0 overflow-hidden shadow-sm relative z-10">
+        <div className="p-8 flex justify-between items-center">
+          <h2 className="text-2xl font-headline-md font-bold text-on-surface">
+            Top 5 Campaigns Leaderboard
           </h2>
+          <Link to="/campaigns" className="text-[#006875] font-bold text-sm hover:underline">View all campaigns →</Link>
         </div>
-        <table className="w-full text-left text-sm">
-          <thead className="bg-surface/30 text-text/60 text-xs uppercase tracking-wider">
-            <tr>
-              <th className="px-6 py-4 font-medium">Campaign</th>
-              <th className="px-6 py-4 font-medium">Channel</th>
-              <th className="px-6 py-4 font-medium text-right">Orders</th>
-              <th className="px-6 py-4 font-medium text-right">Revenue</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {statsLoading ? (
-              <tr><td colSpan="4" className="px-6 py-8 text-center text-text/50">Loading leaderboard...</td></tr>
-            ) : topCampaigns.length > 0 ? topCampaigns.map((c, i) => (
-              <tr key={c.id} className="hover:bg-surface/50 transition-colors">
-                <td className="px-6 py-4 font-medium text-mocha-dark flex items-center gap-3">
-                  <span className="text-text/40 font-bold">#{i + 1}</span> {c.name}
-                </td>
-                <td className="px-6 py-4 capitalize">{c.channel}</td>
-                <td className="px-6 py-4 text-right font-bold text-mocha-dark">{c.orders}</td>
-                <td className="px-6 py-4 text-right font-bold text-success">₹{Math.round(c.revenue).toLocaleString('en-IN')}</td>
+        <div className="px-8 pb-8">
+          <table className="w-full text-left text-sm">
+            <thead className="text-[#978573] text-xs uppercase tracking-widest font-bold border-b border-[#bcc9cc]">
+              <tr>
+                <th className="py-4 font-bold">Campaign Name</th>
+                <th className="py-4 font-bold">Status</th>
+                <th className="py-4 font-bold text-right">Revenue</th>
+                <th className="py-4 font-bold text-right">ROI</th>
+                <th className="py-4 text-right font-bold">Orders</th>
               </tr>
-            )) : (
-              <tr><td colSpan="4" className="px-6 py-8 text-center text-text/50">No campaigns found.</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-[#bcc9cc]/50">
+              {statsLoading ? (
+                <tr><td colSpan="5" className="py-8 text-center text-on-surface-variant font-medium">Loading leaderboard...</td></tr>
+              ) : topCampaigns.length > 0 ? topCampaigns.map((c, i) => {
+                const roi = c.revenue / (c.sent * 0.02 || 1);
+                const Icon = c.channel === 'email' ? Mail : MessageSquare;
+                return (
+                  <tr key={c.id} className="hover:bg-surface-container-lowest transition-colors">
+                    <td className="py-5 font-bold text-on-surface flex items-center gap-4 text-base">
+                      <div className="w-10 h-10 rounded-lg bg-[#006875]/10 flex items-center justify-center text-[#006875]">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      {c.name}
+                    </td>
+                    <td className="py-5">
+                      {c.status !== 'draft' ? (
+                        <span className="px-3 py-1 rounded bg-[#ccfbf1] text-[#0f766e] text-xs font-bold uppercase tracking-wider">Active</span>
+                      ) : (
+                        <span className="px-3 py-1 rounded bg-[#e5e5e5] text-[#525252] text-xs font-bold uppercase tracking-wider">Draft</span>
+                      )}
+                    </td>
+                    <td className="py-5 text-right font-bold text-on-surface text-base">₹{Math.round(c.revenue).toLocaleString('en-IN')}</td>
+                    <td className="py-5 text-right font-bold text-[#006875] text-base">{roi.toFixed(1)}x</td>
+                    <td className="py-5 text-right text-on-surface text-base">{c.orders}</td>
+                  </tr>
+                );
+              }) : (
+                <tr><td colSpan="5" className="py-8 text-center text-on-surface-variant font-medium">No campaigns found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <hr className="border-border" />
 
       {/* AI Query Section */}
-      <div className="max-w-4xl mx-auto space-y-6 pt-4">
-        <div className="text-center mb-2">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-sage to-success text-white mb-4 shadow-md">
-            <Sparkles className="w-7 h-7" />
+      <div className="max-w-4xl mx-auto space-y-8 pt-10 relative z-10">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#006875] text-[#12b1c5] mb-6 shadow-md border border-[#346572]">
+            <CremaIcon className="w-10 h-10 text-[#f8f3e8]" />
           </div>
-          <h2 className="text-2xl font-serif font-bold text-mocha-dark">Ask your data</h2>
-          <p className="text-text/60 mt-1">Can't find what you need above? Ask a custom query in plain English.</p>
+          <h2 className="text-4xl font-headline-xl font-bold text-on-surface">Ask Crema</h2>
+          <p className="text-on-surface-variant font-label-md mt-2 text-lg">Can't find what you need above? Ask a custom query in plain English.</p>
         </div>
 
-        <div className="card">
-          <div className="flex gap-2">
-            <div className="flex items-center gap-2 flex-1 bg-surface border border-border rounded-xl px-3">
-              <Search className="w-4 h-4 text-text/40" />
+        <div className="bg-[#ece8dd] border border-[#bcc9cc] rounded-3xl p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex items-center gap-3 flex-1 bg-surface-white border border-outline-variant rounded-full px-5 shadow-inner focus-within:border-[#12b1c5] focus-within:ring-2 focus-within:ring-[#12b1c5]/20 transition-all">
+              <Search className="w-5 h-5 text-outline" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && run()}
                 placeholder="e.g. Which city has the most Champions?"
-                className="flex-1 bg-transparent py-3 outline-none text-sm"
+                className="flex-1 bg-transparent py-4 outline-none text-base text-on-surface font-medium placeholder:text-outline"
               />
             </div>
-            <button onClick={() => run()} disabled={busy} className="btn-primary px-6 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" /> {busy ? "Thinking…" : "Ask"}
+            <button onClick={() => run()} disabled={busy} className="bg-[#12b1c5] text-[#001f24] hover:brightness-110 font-bold px-8 rounded-full flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50">
+              <CremaIcon className="w-5 h-5" /> {busy ? "Thinking…" : "Ask"}
             </button>
           </div>
-          <div className="flex flex-wrap gap-2 mt-3 justify-center">
+          <div className="flex flex-wrap gap-2 mt-6 justify-center">
             {EXAMPLES.map((ex) => (
-              <button key={ex} onClick={() => run(ex)} className="text-xs bg-surface hover:bg-sage/10 border border-border hover:border-sage/40 px-3 py-1.5 rounded-full transition-colors">
+              <button key={ex} onClick={() => run(ex)} className="text-xs bg-surface-white hover:bg-[#12b1c5]/10 text-on-surface-variant border border-[#bcc9cc] hover:border-[#12b1c5] px-4 py-2 rounded-full font-bold transition-colors">
                 {ex}
               </button>
             ))}
           </div>
         </div>
 
-        {error && <div className="card border-error/30 bg-error/5 text-error text-sm">⚠ {error}</div>}
+        {error && <div className="bg-error/10 border border-error/30 text-error p-4 rounded-xl font-bold text-sm">⚠ {error}</div>}
 
         {result && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card">
-            <div className="flex items-center gap-2 text-xs text-sage font-medium mb-3">
-              <Sparkles className="w-3.5 h-3.5" /> {result.interpretation}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-surface-white border border-[#bcc9cc] rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center gap-2 text-sm text-[#006875] font-bold mb-6">
+              <CremaIcon className="w-5 h-5" /> {result.interpretation}
             </div>
 
             {result.group_by ? (
@@ -337,20 +437,20 @@ export default function Analytics() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="text-sm text-text/60 mt-3">
-                  Top: <b className="text-mocha-dark">{result.rows[0]?.label}</b> with{" "}
-                  <b className="text-mocha-dark">{fmt(result.metric, result.rows[0]?.value || 0)}</b>{" "}
+                <p className="text-sm text-on-surface-variant font-medium mt-6">
+                  Top: <b className="text-on-surface">{result.rows[0]?.label}</b> with{" "}
+                  <b className="text-[#006875]">{fmt(result.metric, result.rows[0]?.value || 0)}</b>{" "}
                   {METRIC_LABEL[result.metric]}, across {result.rows.length} {result.group_by.replace("_", " ")}s.
                 </p>
               </>
             ) : (
-              <div className="flex items-center gap-4 py-6">
-                <div className="bg-sage/10 text-sage p-3 rounded-2xl"><TrendingUp className="w-8 h-8" /></div>
+              <div className="flex items-center gap-6 py-6">
+                <div className="bg-[#12b1c5]/20 text-[#006875] p-4 rounded-2xl"><TrendingUp className="w-10 h-10" /></div>
                 <div>
-                  <div className="text-5xl font-serif font-bold text-mocha-dark">
+                  <div className="text-6xl font-headline-xl font-bold text-on-surface">
                     <CountUp value={result.value} formatter={(v) => fmt(result.metric, v)} />
                   </div>
-                  <div className="text-sm text-text/50 mt-1">{METRIC_LABEL[result.metric]}</div>
+                  <div className="text-base text-on-surface-variant font-bold mt-2 uppercase tracking-widest">{METRIC_LABEL[result.metric]}</div>
                 </div>
               </div>
             )}

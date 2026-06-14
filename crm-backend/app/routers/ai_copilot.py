@@ -16,12 +16,17 @@ from sqlalchemy.orm import Session
 import json
 
 from app.ai.client import AIUnavailable, get_ai
+from urllib.parse import quote
+
+import httpx
+
 from app.ai.prompts import (
     ANALYTICS,
     ASSISTANT_ROUTER,
     CHAT_REFINE,
     DRAFT_MESSAGE,
     GOAL_TO_SEGMENT,
+    IMAGE_PROMPT,
     SEGMENTABLE_FIELDS,
 )
 from app.database import get_db
@@ -34,8 +39,12 @@ from app.schemas import (
     CopilotLaunchIn,
     CopilotProposal,
     DraftIn,
+    ImageIn,
     SegmentRule,
 )
+
+# Channels that can carry rich media (an image). SMS is text-only.
+IMAGE_CHANNELS = {"whatsapp", "rcs", "email"}
 from app.services.analytics import run_analytics
 from app.services.campaign_service import dispatch_campaign
 from app.services.segmentation import apply_rules, build_filters, compute_data_profile
@@ -162,6 +171,67 @@ def draft(payload: DraftIn):
     return {"message_draft": text}
 
 
+_IMG_STORE: dict[str, bytes] = {}  # in-memory generated images (demo)
+
+
+@router.post("/image")
+def image(payload: ImageIn):
+    """Design + generate a rich-media image for a message.
+
+    The AI writes a vivid image prompt from the message; we render it with a
+    text-to-image model (Hugging Face if a token is set, else a best-effort
+    keyless service). Only rich channels get media — SMS is text-only.
+    Tradeoff: a real brand uses an approved asset library; AI generation here
+    demonstrates the capability.
+    """
+    import uuid
+
+    from app.config import settings
+
+    if payload.channel not in IMAGE_CHANNELS:
+        return {"supported": False, "reason": f"{payload.channel} is text-only"}
+
+    try:
+        prompt = get_ai().generate_text(IMAGE_PROMPT.format(message=payload.message))
+        prompt = prompt.strip().strip('"').replace("\n", " ")[:200]
+    except AIUnavailable:
+        prompt = "warm cinematic photo of specialty coffee, cozy cafe, steam, golden light"
+    full = f"{prompt}, Brewhaus specialty coffee, photoreal, warm tones, no text"
+
+    # Preferred: Hugging Face inference (reliable, real generation).
+    if settings.hf_token:
+        try:
+            r = httpx.post(
+                f"https://router.huggingface.co/hf-inference/models/{settings.hf_image_model}",
+                headers={"Authorization": f"Bearer {settings.hf_token}"},
+                json={"inputs": full},
+                timeout=60,
+            )
+            if r.status_code == 200 and r.headers.get("content-type", "").startswith("image"):
+                img_id = uuid.uuid4().hex[:12]
+                _IMG_STORE[img_id] = r.content
+                return {
+                    "supported": True, "image_prompt": prompt,
+                    "image_url": f"{settings.crm_public_url}/copilot/image/{img_id}.jpg",
+                }
+        except httpx.HTTPError:
+            pass  # fall through to keyless
+
+    # Fallback: keyless service (best-effort; may be rate-limited).
+    url = f"https://image.pollinations.ai/prompt/{quote(full)}?width=640&height=400&nologo=true"
+    return {"supported": True, "image_prompt": prompt, "image_url": url}
+
+
+@router.get("/image/{img_id}.jpg")
+def get_image(img_id: str):
+    from fastapi import Response
+
+    data = _IMG_STORE.get(img_id)
+    if data is None:
+        raise HTTPException(404, "image not found")
+    return Response(content=data, media_type="image/jpeg")
+
+
 @router.post("/launch")
 def launch(payload: CopilotLaunchIn, background: BackgroundTasks, db: Session = Depends(get_db)):
     """Turn an approved proposal into a live campaign: create + send in one call."""
@@ -183,6 +253,7 @@ def launch(payload: CopilotLaunchIn, background: BackgroundTasks, db: Session = 
         message_template=payload.message_template,
         message_template_b=payload.message_template_b,
         channel_b=payload.channel_b,
+        image_url=payload.image_url,
         status="scheduled" if payload.scheduled_at else "draft",
         scheduled_at=payload.scheduled_at,
     )

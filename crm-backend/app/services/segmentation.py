@@ -23,6 +23,7 @@ DIRECT_FIELDS = {
     "lifecycle_stage": Customer.lifecycle_stage,
     "city": Customer.city,
     "channel_pref": Customer.channel_pref,
+    "gender": Customer.gender,
     "rfm_segment": Customer.rfm_segment,
     "r_score": Customer.r_score,
     "f_score": Customer.f_score,

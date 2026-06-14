@@ -26,6 +26,7 @@ def create_campaign(payload: CampaignCreateIn, db: Session = Depends(get_db)):
         message_template=payload.message_template,
         message_template_b=payload.message_template_b,
         channel_b=payload.channel_b,
+        image_url=payload.image_url,
         status="draft",
     )
     db.add(campaign)
@@ -43,7 +44,8 @@ def list_campaigns(db: Session = Depends(get_db)):
             "name": c.name, 
             "channel": c.channel, 
             "status": c.status,
-            "has_ab_test": bool(c.message_template_b or c.channel_b)
+            "has_ab_test": bool(c.message_template_b or c.channel_b),
+            "image_url": c.image_url,
         }
         for c in rows
     ]

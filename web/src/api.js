@@ -36,6 +36,8 @@ export const api = {
     req("/copilot/propose", { method: "POST", body: JSON.stringify({ goal }) }),
   draft: (description, channel) =>
     req("/copilot/draft", { method: "POST", body: JSON.stringify({ description, channel }) }),
+  genImage: (message, channel) =>
+    req("/copilot/image", { method: "POST", body: JSON.stringify({ message, channel }) }),
   chat: (messages, proposal) =>
     req("/copilot/chat", { method: "POST", body: JSON.stringify({ messages, proposal }) }),
   ask: (question) =>
@@ -55,6 +57,9 @@ export const api = {
   automationToggle: (enabled) =>
     req("/automations/abandoned-cart/toggle", { method: "POST", body: JSON.stringify({ enabled }) }),
   automationCarts: (limit = 20) => req(`/automations/abandoned-cart/carts?limit=${limit}`),
+  birthdayAutomation: () => req("/automations/birthday"),
+  birthdayToggle: (enabled) =>
+    req("/automations/birthday/toggle", { method: "POST", body: JSON.stringify({ enabled }) }),
 
   // CSV ingestion (multipart — no JSON content-type header).
   ingestCustomers: (file) => uploadCsv("/ingest/customers", file),

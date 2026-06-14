@@ -3,16 +3,31 @@ import { Sparkles, X, Send, Bot, User, BarChart2 } from "lucide-react";
 import { api } from "../api";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { MascotFace, SteamingCup } from "./CoffeeDoodles";
+
+const CremaIcon = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    {/* Heart Steam centered at x=10 */}
+    <path d="M15 4.5C15 3.11929 13.8807 2 12.5 2C11.433 2 10.523 2.6685 10.1614 3.60682C9.7997 2.6685 8.88972 2 7.82276 2C6.44205 2 5.32275 3.11929 5.32275 4.5C5.32275 6.0967 6.7471 7.6432 9.3621 9.9407C9.7937 10.3201 10.4552 10.3201 10.8867 9.9407C13.5017 7.6432 14.9261 6.0967 15.0361 4.5H15Z" />
+    {/* Cup Base */}
+    <path d="M4 11H16V14C16 17.3137 13.3137 20 10 20C6.68629 20 4 17.3137 4 14V11Z" />
+    {/* Handle */}
+    <path d="M16 11V15H17.5C18.8807 15 20 13.8807 20 12.5C20 11.1193 18.8807 10 17.5 10H16V11Z" />
+    {/* Saucer */}
+    <path d="M2 21C2 20.4477 2.44772 20 3 20H17C17.5523 20 18 20.4477 18 21C18 21.5523 17.5523 22 17 22H3C2.44772 22 2 21.5523 2 21Z" />
+  </svg>
+);
 
 export default function FloatingAgent() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState([
     {
       role: "agent",
-      text: "Hi! I'm your Universal Assistant. I can help you navigate, fetch data, or launch campaigns. How can I help?",
+      text: "Hi! I'm Crema. Sip your coffee, till I work for you. How can I help you today?",
     },
   ]);
   const [thinking, setThinking] = useState(false);
@@ -109,6 +124,8 @@ export default function FloatingAgent() {
     );
   };
 
+  if (location.pathname === "/crema") return null;
+
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       <AnimatePresence>
@@ -124,8 +141,8 @@ export default function FloatingAgent() {
             {/* Header */}
             <div className="bg-mocha-dark p-4 flex justify-between items-center shadow-md z-10">
               <div className="flex items-center gap-2 text-surface-white">
-                <Sparkles className="w-5 h-5 text-caramel" />
-                <h3 className="font-serif font-bold">Data Agent</h3>
+                <CremaIcon className="w-6 h-6 text-caramel" />
+                <h3 className="font-serif font-bold">Crema AI Agent</h3>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -151,7 +168,7 @@ export default function FloatingAgent() {
                       msg.role === "user" ? "bg-caramel text-white" : "bg-mocha-dark text-caramel"
                     )}
                   >
-                    {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                    {msg.role === "user" ? <User className="w-4 h-4" /> : <MascotFace className="w-5 h-5" />}
                   </div>
                   <div
                     className={clsx(
@@ -178,12 +195,10 @@ export default function FloatingAgent() {
               {thinking && (
                 <div className="flex gap-2 mr-auto max-w-[85%]">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-mocha-dark text-caramel flex items-center justify-center">
-                    <Bot className="w-4 h-4" />
+                    <MascotFace className="w-5 h-5" />
                   </div>
                   <div className="bg-white border border-border text-text p-3 rounded-2xl rounded-tl-sm shadow-sm flex gap-1 items-center">
-                    <span className="w-2 h-2 bg-caramel rounded-full animate-bounce"></span>
-                    <span className="w-2 h-2 bg-caramel rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                    <span className="w-2 h-2 bg-caramel rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                    <SteamingCup className="w-6 h-6 text-caramel/60" />
                   </div>
                 </div>
               )}
@@ -215,15 +230,35 @@ export default function FloatingAgent() {
         )}
       </AnimatePresence>
 
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={clsx(
-          "w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl transition-transform hover:scale-105 active:scale-95",
-          isOpen ? "bg-mocha-dark" : "bg-gradient-to-tr from-caramel to-warning"
-        )}
-      >
-        {isOpen ? <X className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
-      </button>
+      <div className="relative flex items-center">
+        {/* Floating Bubble Tag */}
+        <AnimatePresence>
+          {!isOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ delay: 0.5 }}
+              className="absolute right-[70px] animate-bounce flex items-center z-10 pointer-events-none"
+            >
+              <div className="bg-white text-mocha-dark px-4 py-2.5 rounded-xl shadow-lg border border-border whitespace-nowrap font-bold text-sm tracking-wide">
+                Ask Crema anything
+              </div>
+              <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[10px] border-l-white border-b-[8px] border-b-transparent drop-shadow-sm -ml-[1px]" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={clsx(
+            "w-16 h-16 rounded-full flex items-center justify-center text-white shadow-2xl transition-transform hover:scale-105 active:scale-95 z-20",
+            isOpen ? "bg-mocha-dark" : "bg-[#77574d]"
+          )}
+        >
+          {isOpen ? <X className="w-6 h-6" /> : <CremaIcon className="w-8 h-8" />}
+        </button>
+      </div>
     </div>
   );
 }

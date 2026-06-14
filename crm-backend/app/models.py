@@ -35,6 +35,11 @@ class Customer(Base):
     channel_pref: Mapped[str] = mapped_column(String(20))  # whatsapp|email|sms
     signup_date: Mapped[datetime] = mapped_column(DateTime)
     opt_out: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Profile attributes (enable birthday offers, gender-targeted campaigns).
+    dob: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    gender: Mapped[str] = mapped_column(String(12), default="unknown")  # female|male|other|unknown
+    # Year we last sent this shopper a birthday offer (dedupe: once per year).
+    last_birthday_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # Derived/cached behavioural fields the AI segments on (kept fresh on ingest).
     persona: Mapped[str] = mapped_column(String(40), index=True)  # for eval only
@@ -91,6 +96,8 @@ class Campaign(Base):
     # Optional A/B variant — when set, the audience is split 50/50 across A and B.
     message_template_b: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     channel_b: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # AI-generated rich-media image attached to the message (whatsapp/rcs/email).
+    image_url: Mapped[str | None] = mapped_column(String(600), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="draft")  # draft|sending|sent
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

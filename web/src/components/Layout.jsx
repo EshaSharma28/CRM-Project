@@ -1,99 +1,155 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Coffee, LayoutDashboard, Users, Megaphone, Activity, Bot, LogOut, Upload, Search, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import FloatingAgent from "./FloatingAgent";
 
 export default function Layout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  const navItems = [
-    { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-    { to: "/analytics", icon: TrendingUp, label: "Analytics Studio", showcase: true },
-    { to: "/copilot", icon: Bot, label: "Copilot", showcase: true },
-    { to: "/agent", icon: Sparkles, label: "Autonomous agent", showcase: true },
-    { to: "/automations", icon: Zap, label: "Automations", showcase: true },
-    { to: "/audiences", icon: Users, label: "Audiences" },
-    { to: "/campaigns", icon: Megaphone, label: "Campaigns" },
-    { to: "/shoppers", icon: Users, label: "Shoppers" },
-    { to: "/activity", icon: Activity, label: "Activity" },
+  const navCategories = [
+    {
+      title: "Main Menu",
+      items: [
+        { to: "/", icon: "dashboard", label: "Dashboard" },
+        { to: "/analytics", icon: "analytics", label: "Analytics Studio" },
+      ]
+    },
+    {
+      title: "Intelligence",
+      items: [
+        { to: "/crema", icon: "smart_toy", label: "Goal with crema" },
+        { to: "/agent", icon: "precision_manufacturing", label: "Autonomous Agent" },
+      ]
+    },
+    {
+      title: "Growth",
+      items: [
+        { to: "/automations", icon: "settings_suggest", label: "Automations" },
+        { to: "/audiences", icon: "groups", label: "Audiences" },
+        { to: "/campaigns", icon: "campaign", label: "Campaigns" },
+        { to: "/shoppers", icon: "shopping_basket", label: "Shoppers" },
+        { to: "/activity", icon: "history", label: "Activity" },
+      ]
+    }
   ];
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 bg-surface-white border-r border-border flex flex-col transition-all">
-        <div className="p-6 flex items-center gap-3 border-b border-border">
-          <div className="text-caramel bg-caramel/10 p-2 rounded-xl">
-            <Coffee className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="font-serif font-bold text-lg text-mocha-dark leading-tight">Brewhaus</h1>
-            <p className="text-xs text-sage">CRM</p>
-          </div>
-        </div>
-        
-        <nav className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                clsx(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-colors relative",
-                  isActive
-                    ? "bg-caramel/10 text-caramel"
-                    : "text-text hover:bg-surface"
-                )
-              }
-            >
-              <item.icon className="w-5 h-5" />
-              {item.label}
-              {item.showcase && (
-                <span className="ml-auto text-xs bg-gradient-to-r from-caramel to-warning text-white px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-1">
-                  <span className="text-[10px]">✦</span> AI
-                </span>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-border mt-auto">
-          <div className="bg-surface rounded-xl p-3 flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center text-sage font-bold text-xs">
-                M
+    <>
+      <AnimatePresence>
+        {location.state?.fromLogin && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut", delay: 0.2 }}
+            onAnimationComplete={() => {
+              window.history.replaceState({}, document.title);
+            }}
+            className="fixed inset-0 z-[100] bg-[#3E2723] pointer-events-none"
+          />
+        )}
+      </AnimatePresence>
+      <div className="flex h-screen bg-background overflow-hidden text-on-surface">
+        {/* Sidebar */}
+        <aside className="w-64 flex-shrink-0 bg-surface-container-low border-r border-outline-variant flex flex-col transition-all z-50">
+          {/* Brand Header */}
+          <div className="flex flex-col p-6 gap-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary-container flex items-center justify-center rounded-lg">
+                <span className="material-symbols-outlined text-on-primary-container font-bold">coffee</span>
               </div>
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-medium truncate">Marketer</p>
-                <p className="text-xs text-text/60 truncate">Demo Account</p>
+              <div className="flex flex-col">
+                <span className="font-headline-md text-headline-md font-bold text-primary tracking-tight">Brewhaus</span>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center justify-center gap-2 text-error hover:bg-error/10 py-2 rounded-lg text-sm font-medium transition-colors mt-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </button>
           </div>
-        </div>
-      </aside>
+          
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto px-4 scrollbar-hide space-y-1">
+            {navCategories.map((cat, idx) => (
+              <div key={idx} className="mb-4">
+                <p className="px-4 py-2 font-label-sm text-label-sm text-outline uppercase tracking-wider">{cat.title}</p>
+                {cat.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      clsx(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative",
+                        isActive
+                          ? "bg-secondary-container text-on-secondary-container font-bold sidebar-item-active shadow-sm"
+                          : "text-on-surface-variant hover:bg-surface-container-high"
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <span 
+                          className={clsx("material-symbols-outlined", !isActive && "group-hover:text-primary")}
+                          style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
+                        >
+                          {item.icon}
+                        </span>
+                        <span className="font-label-md text-label-md">{item.label}</span>
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            ))}
+          </nav>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <div className="flex-1 overflow-y-auto bg-background p-6">
-          <Outlet />
-        </div>
-      </main>
+          {/* Footer Section */}
+          <div className="p-4 border-t border-outline-variant bg-surface-container mt-auto">
+            <div className="flex flex-col gap-1 mb-4">
+              <button className="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all group w-full text-left">
+                <span className="material-symbols-outlined text-lg">settings</span>
+                <span className="font-label-md text-label-md">Settings</span>
+              </button>
+            </div>
+            
+            {/* Profile Info */}
+            <div className="flex items-center justify-between p-2 bg-surface-container-lowest rounded-xl border border-outline-variant/30">
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col ml-2">
+                  <span className="font-label-md text-label-md font-bold text-on-surface">Marketer</span>
+                  <span className="font-label-sm text-[10px] text-outline truncate w-24">marketer@brewhaus.com</span>
+                </div>
+              </div>
+              <button onClick={handleLogout} className="p-2 hover:bg-error-container hover:text-on-error-container rounded-lg transition-colors group" title="Sign Out">
+                <span className="material-symbols-outlined text-lg">logout</span>
+              </button>
+            </div>
+          </div>
+        </aside>
 
-      <FloatingAgent />
-    </div>
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+          <div className="flex-1 overflow-y-auto bg-background">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.2 }}
+                className="min-h-full"
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </main>
+
+        <FloatingAgent />
+      </div>
+    </>
   );
 }

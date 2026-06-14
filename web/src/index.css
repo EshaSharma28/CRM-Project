@@ -14,7 +14,18 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-text text-surface-white px-4 py-2 rounded-xl font-medium transition-transform hover:scale-105 active:scale-95 shadow-sm;
+    @apply relative overflow-hidden text-surface-white px-4 py-2 rounded-xl font-medium transition-all active:scale-95 shadow-sm z-0;
+  }
+  .btn-primary::before {
+    content: '';
+    @apply absolute inset-0 bg-text -z-20 transition-colors duration-300;
+  }
+  .btn-primary::after {
+    content: '';
+    @apply absolute inset-0 bg-caramel origin-bottom transform scale-y-0 transition-transform duration-300 ease-out -z-10;
+  }
+  .btn-primary:hover::after {
+    @apply scale-y-100;
   }
   .btn-secondary {
     @apply bg-surface border border-border text-text px-4 py-2 rounded-xl font-medium transition-transform hover:scale-105 active:scale-95 shadow-sm;
@@ -22,8 +33,20 @@
   .card {
     @apply bg-surface-white border border-border rounded-2xl shadow-sm p-6;
   }
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-caramel/10;
+  }
   .input-field {
     @apply w-full bg-surface border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-caramel/50 transition-shadow;
+  }
+  .glass-card {
+    background: rgba(253, 248, 237, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(188, 201, 204, 0.3);
+  }
+  .donut-chart {
+    background: conic-gradient(#12b1c5 0% 65%, #346572 65% 85%, #bf998d 85% 100%);
+    border-radius: 50%;
   }
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { Sparkles, ChevronRight, Loader2 } from "lucide-react";
+import { SteamingCup, Cup, SteamWisp } from "../components/CoffeeDoodles";
 
 export default function CampaignList() {
   const [campaigns, setCampaigns] = useState(null);
@@ -19,82 +19,93 @@ export default function CampaignList() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'sent':
-        return <span className="bg-[#EEF1EB] text-[#4F6C4E] px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border border-[#DEE6DA]">Sent</span>;
+        return <span className="bg-sage/15 text-sage px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border border-sage/20 shadow-sm">Sent</span>;
       case 'sending':
-        return <span className="bg-warning/10 text-warning px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border border-warning/20 flex items-center gap-1.5 w-fit"><span className="w-1.5 h-1.5 bg-warning rounded-full animate-pulse"></span> Sending</span>;
+        return <span className="bg-warning/10 text-warning px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border border-warning/20 flex items-center gap-1.5 w-fit shadow-sm"><SteamWisp className="w-3 h-3 text-warning" /> Sending</span>;
       case 'scheduled':
-        return <span className="bg-caramel/10 text-caramel px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border border-caramel/20 flex items-center gap-1.5 w-fit"><span className="w-1.5 h-1.5 bg-caramel rounded-full"></span> Scheduled</span>;
+        return <span className="bg-primary/10 text-primary px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border border-primary/20 flex items-center gap-1.5 w-fit shadow-sm"><span className="w-1.5 h-1.5 bg-primary rounded-full"></span> Scheduled</span>;
       case 'draft':
-        return <span className="bg-surface text-text/60 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border border-border">Draft</span>;
+        return <span className="bg-surface-container-highest text-on-surface-variant px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border border-outline-variant/30 shadow-sm">Draft</span>;
       default:
-        return <span className="bg-surface text-text/60 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border border-border capitalize">{status}</span>;
+        return <span className="bg-surface-container-highest text-on-surface-variant px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border border-outline-variant/30 capitalize shadow-sm">{status}</span>;
     }
   };
 
   const getChannelBadge = (channel) => {
-    return <span className="bg-white border border-border text-mocha-dark px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider capitalize shadow-sm">{channel}</span>;
+    return <span className="bg-white border border-outline-variant/30 text-on-surface px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider capitalize shadow-sm">{channel}</span>;
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-8">
-      <div className="card p-0 overflow-hidden shadow-sm border border-border bg-white rounded-2xl">
-        
-        {/* Card Header */}
-        <div className="p-6 border-b border-border flex items-center justify-between">
-          <h3 className="text-xl font-serif font-bold text-mocha-dark">All campaigns</h3>
-          <button onClick={() => navigate("/copilot")} className="bg-[#BE7E50] hover:bg-[#A66C44] text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
-            <Sparkles className="w-4 h-4" /> New with co-pilot
-          </button>
-        </div>
+    <div className="relative min-h-full">
+      {/* Faded Background Cliparts */}
+      <div className="fixed bottom-[2%] right-[5%] w-full max-w-[350px] opacity-[0.06] pointer-events-none z-0">
+        <img src="/audience-bg-bottom.png" alt="" className="w-full h-auto object-contain" />
+      </div>
 
-        {/* Content */}
-        {campaigns === null ? (
-          <div className="p-16 flex flex-col items-center justify-center text-text/40 space-y-4">
-            <div className="flex gap-2">
-              <div className="w-2 h-2 bg-caramel/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-caramel/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-caramel/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      <div className="p-8 max-w-7xl mx-auto space-y-8 relative z-10">
+        {/* Header Section */}
+        <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-outline-variant/30 pb-6">
+          <div>
+            <h1 className="font-headline-xl text-headline-xl text-on-surface mb-2">Campaigns</h1>
+            <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+              Create, manage, and monitor your personalized marketing campaigns.
+            </p>
+          </div>
+          <button onClick={() => navigate("/crema")} className="bg-primary text-on-primary px-6 py-2.5 rounded-full font-label-md flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-sm">
+            <span className="material-symbols-outlined text-[20px]">auto_awesome</span> New with Crema
+          </button>
+        </section>
+
+        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-sm glass-effect overflow-hidden">
+          {/* Content */}
+          {campaigns === null ? (
+            <div className="p-20 flex flex-col items-center justify-center text-on-surface-variant space-y-4">
+              <SteamingCup className="w-16 h-16 text-primary/60" />
+              <p className="font-label-md">Brewing campaigns...</p>
             </div>
-          </div>
-        ) : campaigns.length === 0 ? (
-          <div className="p-16 text-center text-text/50">
-            <p className="text-sm">No campaigns yet — start one with the co-pilot.</p>
-          </div>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[#F7F4F0] text-text/50 text-[10px] uppercase tracking-widest border-b border-border">
-              <tr>
-                <th className="px-6 py-4 font-bold">Campaign</th>
-                <th className="px-6 py-4 font-bold">Channel</th>
-                <th className="px-6 py-4 font-bold">Status</th>
-                <th className="px-6 py-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {campaigns.map(c => (
-                <tr key={c.id} onClick={() => navigate(`/campaigns/${c.id}`)} className="hover:bg-[#F7F4F0]/50 transition-colors cursor-pointer group">
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-mocha-dark text-[15px]">{c.name}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      {getChannelBadge(c.channel)}
-                      {c.has_ab_test && (
-                        <span className="text-[10px] font-bold text-caramel uppercase tracking-wider">A/B Test</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {getStatusBadge(c.status)}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <ChevronRight className="w-5 h-5 text-text/30 group-hover:text-caramel transition-colors inline-block" />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+          ) : campaigns.length === 0 ? (
+            <div className="p-20 flex flex-col items-center justify-center text-center text-on-surface-variant">
+              <Cup className="w-20 h-20 text-primary/20 mb-4" />
+              <p className="font-label-md">No campaigns yet — start one with Crema.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-surface-container-low text-on-surface-variant font-label-sm border-b border-outline-variant/20">
+                  <tr>
+                    <th className="px-6 py-4 font-medium uppercase tracking-wider">Campaign</th>
+                    <th className="px-6 py-4 font-medium uppercase tracking-wider">Channel</th>
+                    <th className="px-6 py-4 font-medium uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/5">
+                  {campaigns.map(c => (
+                    <tr key={c.id} onClick={() => navigate(`/campaigns/${c.id}`)} className="group hover:bg-surface-container-low transition-colors cursor-pointer">
+                      <td className="px-6 py-5">
+                        <div className="font-headline-sm text-on-surface">{c.name}</div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2">
+                          {getChannelBadge(c.channel)}
+                          {c.has_ab_test && (
+                            <span className="text-[10px] font-bold text-tertiary uppercase tracking-wider bg-tertiary/10 px-2 py-0.5 rounded border border-tertiary/20">A/B Test</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        {getStatusBadge(c.status)}
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -49,26 +49,70 @@ def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def ensure_automation(db) -> Automation:
-    """Get-or-create the abandoned-cart automation + the campaign its recovery
-    messages attach to (so they flow through normal stats/attribution)."""
-    auto = db.get(Automation, "abandoned_cart")
+BIRTHDAY_MESSAGE = (
+    "Happy birthday, {first_name}! 🎂 Enjoy 25% off your favourite Brewhaus "
+    "coffee today — our little gift to you ☕"
+)
+
+
+def _ensure(db, key, name, channel, message, delay_label) -> Automation:
+    """Get-or-create an automation + the campaign its messages attach to
+    (so they flow through the same channel loop, stats and attribution)."""
+    auto = db.get(Automation, key)
     if auto is None:
-        camp = Campaign(
-            name="Abandoned Cart Recovery", channel="whatsapp",
-            message_template="(automation)", status="sent",
-        )
+        camp = Campaign(name=name, channel=channel, message_template="(automation)", status="sent")
         db.add(camp)
         db.commit()
         db.refresh(camp)
         auto = Automation(
-            key="abandoned_cart", name="Abandoned Cart Recovery", enabled=True,
-            delay_label="2 hours", channel="whatsapp", message_template=DEFAULT_MESSAGE,
-            campaign_id=camp.id,
+            key=key, name=name, enabled=True, delay_label=delay_label,
+            channel=channel, message_template=message, campaign_id=camp.id,
         )
         db.add(auto)
         db.commit()
     return auto
+
+
+def ensure_automation(db) -> Automation:
+    return _ensure(db, "abandoned_cart", "Abandoned Cart Recovery", "whatsapp", DEFAULT_MESSAGE, "2 hours")
+
+
+def ensure_birthday(db) -> Automation:
+    return _ensure(db, "birthday", "Birthday Offer", "whatsapp", BIRTHDAY_MESSAGE, "on their birthday")
+
+
+def birthday_tick(db) -> None:
+    """Send a once-a-year birthday offer to shoppers whose birthday is today."""
+    auto = ensure_birthday(db)
+    if not auto.enabled:
+        return
+    now = _now()
+    year = now.year
+    today = (now.month, now.day)
+
+    cands = (
+        db.query(Customer)
+        .filter(Customer.dob.isnot(None), Customer.opt_out.is_(False))
+        .filter((Customer.last_birthday_year != year) | (Customer.last_birthday_year.is_(None)))
+        .all()
+    )
+    jobs = []
+    for c in cands:
+        if (c.dob.month, c.dob.day) != today:
+            continue
+        msg = render_message(auto.message_template, c)
+        comm = Communication(
+            campaign_id=auto.campaign_id, customer_id=c.id, channel=auto.channel,
+            rendered_message=msg, variant="A", status="queued",
+        )
+        db.add(comm)
+        db.flush()
+        c.last_birthday_year = year
+        jobs.append({"communication_id": comm.id, "recipient": _recipient(c, auto.channel),
+                     "message": msg, "channel": auto.channel})
+    db.commit()
+    if jobs:
+        dispatch_batch(jobs)
 
 
 def _record_order(db, customer: Customer, product: str, amount: float, when: datetime) -> Order:
@@ -154,7 +198,11 @@ def _run_loop() -> None:
         try:
             tick(db)
         except Exception as e:  # keep the worker alive on transient errors
-            print(f"[automation] tick error: {e}")
+            print(f"[automation] cart tick error: {e}")
+        try:
+            birthday_tick(db)
+        except Exception as e:
+            print(f"[automation] birthday tick error: {e}")
         finally:
             db.close()
         time.sleep(TICK_SECONDS)

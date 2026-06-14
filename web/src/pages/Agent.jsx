@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
-import { Bot, Sparkles, Play, Mail, MessageSquare, Smartphone, Clock, Users, CheckCircle2, Loader2, ArrowDown } from "lucide-react";
 import { motion } from "framer-motion";
 import clsx from "clsx";
 
@@ -10,7 +9,16 @@ const EXAMPLES = [
   "Drive repeat orders from Potential Loyalists this month",
 ];
 
-const CHANNEL_ICON = { email: Mail, sms: MessageSquare, whatsapp: Smartphone, rcs: MessageSquare };
+const CHANNEL_ICON = { email: "alternate_email", sms: "textsms", whatsapp: "chat", rcs: "textsms" };
+const CHANNEL_SYMBOL = { email: "mail", sms: "sms", whatsapp: "smartphone", rcs: "sms" };
+
+const BgSteamTall = ({ className }) => (
+  <svg viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M40 180 C 10 160, 20 120, 30 90 C 40 60, 10 40, 20 10 C 25 -5, 40 5, 30 20" />
+    <path d="M60 190 C 50 150, 80 120, 60 80 C 40 40, 60 20, 80 40 C 90 50, 80 70, 70 60" />
+    <path d="M20 140 C 0 120, 50 100, 35 60" />
+  </svg>
+);
 
 export default function Agent() {
   const [goal, setGoal] = useState("");
@@ -46,7 +54,7 @@ export default function Agent() {
         name: plan.name, goal, objective: plan.objective || "",
         steps: plan.steps.map((s) => ({
           label: s.label, audience_kind: s.audience_kind, rules: s.rules || [],
-          channel: s.channel, message: s.message, wait_label: s.wait_label || "",
+          channel: s.channel, message: s.message || s.message_template, wait_label: s.wait_label || "",
         })),
       };
       const res = await api.agentRun(payload);
@@ -71,194 +79,239 @@ export default function Agent() {
   const steps = journey?.steps || plan?.steps || [];
 
   return (
-    <div className="max-w-3xl mx-auto py-6 space-y-6">
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-mocha to-caramel text-white mb-4 shadow-md">
-          <Bot className="w-7 h-7" />
-        </div>
-        <h1 className="text-3xl font-serif font-bold text-mocha-dark">Autonomous agent</h1>
-        <p className="text-text/60 mt-1">Give one goal. The agent plans a multi-step journey and runs it itself.</p>
+    <div className="relative min-h-full">
+      {/* Faded Background Cliparts */}
+      <div className="fixed top-[5%] left-[25%] w-full max-w-[120px] pointer-events-none z-0">
+        <BgSteamTall className="w-full h-auto text-[#77574d] opacity-[0.06]" />
+      </div>
+      <div className="fixed bottom-[30%] left-[22%] w-full max-w-[240px] opacity-[0.07] pointer-events-none z-0">
+        <img src="/walking-pots.png" alt="" className="w-full h-auto object-contain" />
+      </div>
+      <div className="fixed top-[15%] right-[2%] w-full max-w-[340px] opacity-[0.06] pointer-events-none z-0">
+        <img src="/clipart-heads.png" alt="" className="w-full h-auto object-contain" />
+      </div>
+      <div className="fixed bottom-0 right-[15%] w-full max-w-[200px] opacity-[0.08] pointer-events-none z-0 pb-8">
+        <img src="/clipart-guy.png" alt="" className="w-full h-auto object-contain" />
       </div>
 
-      {/* Goal input */}
-      {!journeyId && (
-        <div className="card">
-          <div className="flex gap-2">
-            <input
-              value={goal} onChange={(e) => setGoal(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && makePlan()}
-              placeholder="e.g. Win back lapsed VIPs and keep nudging non-responders…"
-              className="input-field flex-1"
-            />
-            <button onClick={() => makePlan()} disabled={planning} className="btn-primary px-6 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" /> {planning ? "Planning…" : "Plan journey"}
-            </button>
-          </div>
-          {!plan && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {EXAMPLES.map((ex) => (
-                <button key={ex} onClick={() => makePlan(ex)} className="text-xs bg-surface hover:bg-caramel/10 border border-border hover:border-caramel/30 px-3 py-1.5 rounded-full transition-colors text-left">
-                  {ex}
-                </button>
-              ))}
-            </div>
-          )}
+      <div className="max-w-4xl mx-auto py-6 relative z-10">
+        {/* Header Section */}
+        <header className="text-center mb-12">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-tertiary-container rounded-full mb-6 shadow-sm">
+          <span className="material-symbols-outlined text-on-tertiary-container text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
         </div>
-      )}
+        <h1 className="font-headline-xl text-headline-xl text-on-background mb-4">Autonomous agent</h1>
+        <p className="font-body-lg text-body-lg text-on-surface-variant max-w-xl mx-auto">
+          Give one goal. The agent plans a multi-step journey and runs it itself.
+        </p>
+      </header>
 
-      {error && <div className="card border-error/30 bg-error/5 text-error text-sm">⚠ {error}</div>}
-
-      {planning && (
-        <div className="card flex items-center gap-3"><Loader2 className="w-5 h-5 text-caramel animate-spin" /><span className="text-caramel font-medium">Designing a multi-step plan…</span></div>
-      )}
-
-      {/* Plan / live journey */}
-      {(plan || journey) && (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card">
-          <div className="flex items-start justify-between mb-1">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-caramel font-medium mb-1">
-                <Sparkles className="w-3.5 h-3.5" /> {journey ? "Agent journey" : "Proposed by gemini-2.5-flash"}
+      {/* Goal Input Area */}
+      {!journeyId && (
+        <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-10 shadow-sm transition-all hover:shadow-md">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <input
+                  className="w-full bg-transparent border-none focus:ring-0 font-body-lg text-on-surface px-4 outline-none"
+                  placeholder="Enter your campaign goal..."
+                  type="text"
+                  value={goal}
+                  onChange={(e) => setGoal(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && makePlan()}
+                />
               </div>
-              <h2 className="text-xl font-serif font-bold text-mocha-dark">{(journey || plan).name}</h2>
-              <p className="text-sm text-text/60 mt-1">{(journey || plan).objective}</p>
+              <button
+                onClick={() => makePlan()}
+                disabled={planning}
+                className="bg-on-surface text-surface px-8 py-3 rounded-lg font-label-md hover:opacity-90 transition-opacity flex items-center gap-2 group disabled:opacity-50"
+              >
+                {planning ? (
+                  <span className="material-symbols-outlined animate-spin">sync</span>
+                ) : (
+                  <span className="material-symbols-outlined group-hover:rotate-12 transition-transform">bolt</span>
+                )}
+                {planning ? "Planning..." : "Plan journey"}
+              </button>
             </div>
-            {journey && (
-              <span className={clsx("text-xs px-3 py-1.5 rounded-full font-medium border whitespace-nowrap",
-                journey.status === "completed" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20")}>
-                {journey.status === "completed" ? "Completed" : "● Running"}
-              </span>
+            {!plan && !planning && (
+              <div className="flex flex-wrap gap-2 px-4">
+                {EXAMPLES.map((ex) => (
+                  <button key={ex} onClick={() => makePlan(ex)} className="text-xs bg-surface-container-low hover:bg-surface-container-high border border-outline-variant px-3 py-1.5 rounded-full transition-colors text-left text-on-surface-variant">
+                    {ex}
+                  </button>
+                ))}
+              </div>
             )}
+            {error && <div className="text-error text-sm px-4 mt-2">⚠ {error}</div>}
           </div>
+        </section>
+      )}
 
-          {/* Steps timeline */}
-          <div className="mt-5 space-y-1">
-            {steps.map((s, i) => {
-              const Icon = CHANNEL_ICON[s.channel] || Mail;
-              const st = journey ? s.status : "planned";
-              const isEditing = !journey && editingStepIndex === i;
+      {/* Proposed Journey Section */}
+      {(plan || journey) && (
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          <section className="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden relative">
+            <div className="p-8">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+                <span className="font-label-sm text-primary uppercase tracking-wider">
+                  {journey ? "Agent journey" : "Proposed by gemini-2.5-flash"}
+                </span>
+                {journey && (
+                  <span className={clsx("ml-auto text-xs px-3 py-1 rounded-full font-bold", 
+                    journey.status === "completed" ? "bg-primary-container text-on-primary-container" : "bg-tertiary-container text-on-tertiary-container animate-pulse"
+                  )}>
+                    {journey.status === "completed" ? "Completed" : "Running"}
+                  </span>
+                )}
+              </div>
+              <h2 className="font-headline-lg text-headline-lg text-on-background mb-1">{(journey || plan).name}</h2>
+              <p className="text-on-surface-variant font-body-md mb-8">{(journey || plan).objective}</p>
+              
+              <div className="space-y-6 relative">
+                {steps.map((s, i) => {
+                  const channelKey = s.channel || "email";
+                  const IconName = CHANNEL_ICON[channelKey] || "alternate_email";
+                  const OuterIconName = CHANNEL_SYMBOL[channelKey] || "mail";
+                  const st = journey ? s.status : "planned";
+                  const isEditing = !journey && editingStepIndex === i;
 
-              return (
-                <div key={i}>
-                  {i > 0 && (
-                    <div className="flex items-center gap-2 text-text/40 text-xs pl-5 py-1">
-                      <ArrowDown className="w-3.5 h-3.5" />
-                      <Clock className="w-3 h-3" /> 
-                      {isEditing ? (
-                        <input 
-                          type="text" 
-                          value={s.wait_label || ""} 
-                          onChange={(e) => updateStep(i, "wait_label", e.target.value)} 
-                          className="bg-transparent border-b border-border outline-none text-text focus:border-caramel px-1" 
-                          placeholder="Wait time..."
-                        />
-                      ) : (
-                        <span>{s.wait_label || "next"}</span>
-                      )}
-                      {" "}· re-targets {labelKind(s.audience_kind)}
-                    </div>
-                  )}
-                  <div className={clsx("rounded-xl border p-4 flex gap-3 transition-colors",
-                    isEditing ? "border-caramel bg-caramel/5 shadow-sm" :
-                    st === "sent" ? "border-success/30 bg-success/5" :
-                    st === "running" ? "border-warning/40 bg-warning/5" :
-                    st === "skipped" ? "border-border bg-surface/40 opacity-60" : "border-border bg-surface/40")}>
-                    <div className="mt-0.5">
-                      <StepIcon status={st} Icon={Icon} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <h3 className="font-medium text-mocha-dark">{s.label}</h3>
-                        
-                        {!journey && (
-                          <button 
-                            onClick={() => setEditingStepIndex(isEditing ? null : i)}
-                            className={clsx("text-xs font-medium px-2.5 py-1 rounded-full transition-colors", 
-                              isEditing ? "bg-caramel text-white" : "bg-white border border-border text-text hover:text-caramel"
-                            )}
-                          >
-                            {isEditing ? "Save" : "Edit"}
-                          </button>
+                  return (
+                    <div key={i} className={clsx("relative pl-12 group", i > 0 && "pt-4")}>
+                      <div className="absolute left-0 top-4 w-10 h-10 bg-surface-container-highest border border-outline-variant rounded-lg flex items-center justify-center z-10">
+                        {st === "sent" ? (
+                          <span className="material-symbols-outlined text-primary">check_circle</span>
+                        ) : st === "running" ? (
+                          <span className="material-symbols-outlined text-tertiary animate-spin">sync</span>
+                        ) : (
+                          <span className="material-symbols-outlined text-on-surface-variant">{OuterIconName}</span>
                         )}
                       </div>
                       
-                      {isEditing ? (
-                        <div className="space-y-3 mt-2">
-                          <select 
-                            value={s.channel} 
-                            onChange={(e) => updateStep(i, "channel", e.target.value)}
-                            className="input-field py-1.5 text-sm w-fit capitalize"
-                          >
-                            {Object.keys(CHANNEL_ICON).map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                          <textarea 
-                            value={s.message || s.message_template} 
-                            onChange={(e) => updateStep(i, "message", e.target.value)}
-                            className="input-field min-h-[80px] resize-y text-sm bg-white"
-                          />
+                      <div className={clsx("bg-surface rounded-lg p-6 border border-outline-variant shadow-sm transition-colors",
+                          !journey && "group-hover:border-primary",
+                          st === "sent" && "border-primary/30 bg-primary-container/5",
+                          st === "running" && "border-tertiary/30 bg-tertiary-container/5",
+                          st === "skipped" && "opacity-60"
+                        )}>
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="font-label-md text-on-background text-lg font-bold">{s.label}</h3>
+                            <div className="flex items-center gap-1.5 text-on-surface-variant opacity-70">
+                              <span className="material-symbols-outlined text-sm">{IconName}</span>
+                              <span className="text-sm capitalize">{s.channel}</span>
+                            </div>
+                          </div>
+                          {!journey && (
+                            <button 
+                              onClick={() => setEditingStepIndex(isEditing ? null : i)}
+                              className={clsx("font-label-md px-3 py-1 border rounded transition-colors",
+                                isEditing ? "text-surface bg-primary border-primary hover:bg-primary/90" : "text-primary border-primary/20 hover:bg-primary/5"
+                              )}
+                            >
+                              {isEditing ? "Save" : "Edit"}
+                            </button>
+                          )}
                         </div>
-                      ) : (
+
+                        {isEditing ? (
+                          <div className="space-y-3 mt-4">
+                            <select 
+                              value={s.channel} 
+                              onChange={(e) => updateStep(i, "channel", e.target.value)}
+                              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm focus:border-primary outline-none"
+                            >
+                              {Object.keys(CHANNEL_ICON).map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <textarea 
+                              value={s.message || s.message_template} 
+                              onChange={(e) => updateStep(i, "message", e.target.value)}
+                              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 min-h-[80px] resize-y text-sm focus:border-primary outline-none"
+                            />
+                            {i > 0 && (
+                              <input 
+                                type="text" 
+                                value={s.wait_label || ""} 
+                                onChange={(e) => updateStep(i, "wait_label", e.target.value)} 
+                                className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm focus:border-primary outline-none" 
+                                placeholder="Wait time (e.g. 3 days)..."
+                              />
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-on-surface-variant font-body-md mb-2">{s.message || s.message_template}</p>
+                        )}
+                        
+                        {/* Status / Audience Footers */}
+                        {!journey && s.audience_kind === "initial" && s.estimated_count != null && (
+                          <span className="text-xs font-medium text-secondary italic opacity-60">~{s.estimated_count} shoppers to start</span>
+                        )}
+                        {journey && st === "skipped" && (
+                          <span className="text-xs font-medium text-on-surface-variant italic opacity-60">Skipped — no one matched this step.</span>
+                        )}
+                        {journey && s.campaign_id && (
+                          <div className="flex flex-wrap gap-4 mt-4 pt-3 border-t border-outline-variant/30">
+                            <Stat label="Audience" value={s.audience_count} />
+                            <Stat label="Sent" value={s.stats?.sent ?? 0} />
+                            <Stat label="Opened" value={s.stats?.opened ?? 0} />
+                            <Stat label="Clicked" value={s.stats?.clicked ?? 0} />
+                            <Stat label="Orders" value={s.stats?.orders_attributed ?? 0} highlight />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Connector Line */}
+                      {i < steps.length - 1 && (
                         <>
-                          <span className="text-xs text-text/50 capitalize flex items-center gap-1 mb-1">
-                            <Icon className="w-3.5 h-3.5" /> {s.channel}
-                          </span>
-                          <p className="text-sm text-text/60 line-clamp-2">{s.message || s.message_template}</p>
+                          <div className="absolute left-5 top-14 bottom-[-24px] w-0.5 bg-outline-variant opacity-50 z-0"></div>
+                          <div className="absolute left-3.5 -bottom-5 flex flex-col items-center gap-0.5 bg-surface-container-low z-10 px-1 py-2">
+                            <span className="material-symbols-outlined text-on-surface-variant text-xs">schedule</span>
+                            <span className="text-[10px] text-on-surface-variant font-bold">
+                              {steps[i + 1].wait_label || "next"}
+                            </span>
+                          </div>
                         </>
                       )}
-
-                      {/* live stats once running */}
-                      {journey && s.campaign_id && (
-                        <div className="flex flex-wrap gap-3 mt-2 text-xs">
-                          <Stat icon={Users} label="audience" value={s.audience_count} />
-                          <Stat label="sent" value={s.stats?.sent ?? 0} />
-                          <Stat label="opened" value={s.stats?.opened ?? 0} />
-                          <Stat label="clicked" value={s.stats?.clicked ?? 0} />
-                          <Stat label="orders" value={s.stats?.orders_attributed ?? 0} highlight />
-                        </div>
-                      )}
-                      {journey && st === "skipped" && <p className="text-xs text-text/40 mt-2">Skipped — no one matched this step.</p>}
-                      {!journey && s.audience_kind === "initial" && s.estimated_count != null && (
-                        <p className="text-xs text-sage mt-2 font-medium">~{s.estimated_count} shoppers to start</p>
-                      )}
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </div>
 
-          {/* Run button */}
-          {!journeyId && (
-            <button onClick={runJourney} className="btn-primary w-full mt-5 py-3 flex items-center justify-center gap-2">
-              <Play className="w-5 h-5" /> Run this journey autonomously
-            </button>
-          )}
-          {journey && journey.status !== "completed" && (
-            <p className="text-center text-xs text-text/50 mt-4 flex items-center justify-center gap-1.5">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" /> The agent is waiting between steps, then re-targeting non-responders…
-            </p>
-          )}
+            {/* Run Button */}
+            {!journeyId && (
+              <div className="bg-surface p-6 border-t border-outline-variant">
+                <button
+                  onClick={runJourney} 
+                  className="w-full bg-on-surface text-surface font-headline-md py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-on-surface/90 transition-all active:scale-[0.99]"
+                >
+                  <span className="material-symbols-outlined">play_circle</span>
+                  Run this journey autonomously
+                </button>
+              </div>
+            )}
+            {journey && journey.status !== "completed" && (
+              <div className="bg-surface p-4 border-t border-outline-variant flex items-center justify-center gap-2 text-on-surface-variant font-label-md">
+                <span className="material-symbols-outlined animate-spin text-tertiary">sync</span>
+                <span>The agent is waiting between steps, then re-targeting non-responders...</span>
+              </div>
+            )}
+          </section>
         </motion.div>
       )}
+      </div>
     </div>
   );
 }
 
-function StepIcon({ status, Icon }) {
-  if (status === "sent") return <div className="bg-success/15 text-success p-2 rounded-lg"><CheckCircle2 className="w-4 h-4" /></div>;
-  if (status === "running") return <div className="bg-warning/15 text-warning p-2 rounded-lg"><Loader2 className="w-4 h-4 animate-spin" /></div>;
-  return <div className="bg-surface text-text/50 p-2 rounded-lg border border-border"><Icon className="w-4 h-4" /></div>;
-}
-
-function Stat({ icon: Icon, label, value, highlight }) {
+function Stat({ label, value, highlight }) {
   return (
-    <span className={clsx("flex items-center gap-1", highlight ? "text-sage font-semibold" : "text-text/60")}>
-      {Icon && <Icon className="w-3.5 h-3.5" />}
-      <b className={highlight ? "text-sage" : "text-mocha-dark"}>{value}</b> {label}
-    </span>
+    <div className="flex flex-col">
+      <span className="text-[10px] uppercase tracking-wider text-on-surface-variant opacity-70">{label}</span>
+      <span className={clsx("font-bold text-lg leading-tight", highlight ? "text-primary" : "text-on-background")}>
+        {value}
+      </span>
+    </div>
   );
-}
-
-function labelKind(kind) {
-  return kind === "non_clickers_of_previous" ? "non-clickers" : kind === "non_openers_of_previous" ? "non-openers" : "audience";
 }

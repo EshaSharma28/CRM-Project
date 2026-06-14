@@ -15,7 +15,7 @@ const SEGMENT_COLORS = {
   Loyal: "#8FA587",
   "Potential Loyalist": "#B6C0A0",
   New: "#D6B884",
-  Promising: "#E0C9A6",
+  Promising: "#C5A574",
   "Needs Attention": "#D69A52",
   "At Risk": "#CE8A5C",
   "Can't Lose Them": "#C9695E",
@@ -45,18 +45,18 @@ export default function RfmBoard() {
   const segments = (data.order || []).filter((name) => data.segments[name]?.count > 0);
 
   return (
-    <div className="card">
-      <div className="flex justify-between items-start mb-1">
+    <div className="bg-surface-white p-6 rounded-2xl border border-[#bcc9cc] overflow-hidden">
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <h2 className="text-lg font-serif font-bold flex items-center gap-2">
-            <Grid3x3 className="w-5 h-5 text-caramel" /> RFM segmentation
+          <h2 className="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
+            <Grid3x3 className="w-6 h-6 text-[#006875]" /> RFM segmentation
           </h2>
-          <p className="text-sm text-text/60">
+          <p className="text-base font-label-md text-on-surface font-bold mt-1">
             Recency × Frequency × Monetary — the marketer's map of your base.
           </p>
         </div>
-        <Link to="/copilot" className="text-xs text-caramel font-medium flex items-center gap-1 hover:underline whitespace-nowrap">
-          <Sparkles className="w-3.5 h-3.5" /> Target with co-pilot
+        <Link to="/crema" className="text-sm bg-[#12b1c5] text-[#001f24] px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 hover:brightness-110 transition-all whitespace-nowrap shadow-sm">
+          <Sparkles className="w-4 h-4" /> Goal with crema
         </Link>
       </div>
 
@@ -65,14 +65,14 @@ export default function RfmBoard() {
         <div>
           <div className="flex">
             <div className="flex flex-col justify-center pr-2">
-              <span className="text-[10px] uppercase tracking-wider text-text/50 font-semibold -rotate-90 origin-center whitespace-nowrap">
+              <span className="text-[10px] uppercase tracking-wider text-on-surface font-bold -rotate-90 origin-center whitespace-nowrap">
                 Recency →
               </span>
             </div>
             <div className="flex-1">
               {[5, 4, 3, 2, 1].map((r) => (
                 <div key={r} className="flex gap-1.5 mb-1.5">
-                  <span className="w-4 text-[10px] text-text/50 self-center text-right">{r}</span>
+                  <span className="w-4 text-[10px] text-gray-400 self-center text-right">{r}</span>
                   {[1, 2, 3, 4, 5].map((f) => {
                     const c = cell(r, f);
                     const intensity = c.count / maxCount;
@@ -83,8 +83,8 @@ export default function RfmBoard() {
                         title={`R${r} · F${f} — ${c.count} shoppers · ${inrCompact(c.monetary)}`}
                         className="flex-1 aspect-square rounded-md flex items-center justify-center text-xs font-semibold transition-transform hover:scale-105 cursor-default"
                         style={{
-                          backgroundColor: `rgba(190,126,80,${alpha})`,
-                          color: intensity > 0.5 ? "#fff" : "#2C211B",
+                          backgroundColor: `rgba(0,104,117,${alpha})`,
+                          color: intensity > 0.5 ? "#fff" : "#1d1c15",
                         }}
                       >
                         {c.count || ""}
@@ -95,10 +95,10 @@ export default function RfmBoard() {
               ))}
               <div className="flex gap-1.5 mt-1 pl-5">
                 {[1, 2, 3, 4, 5].map((f) => (
-                  <span key={f} className="flex-1 text-center text-[10px] text-text/50">{f}</span>
+                  <span key={f} className="flex-1 text-center text-[10px] text-gray-600 font-bold">{f}</span>
                 ))}
               </div>
-              <p className="text-[10px] uppercase tracking-wider text-text/50 font-semibold text-center mt-1">
+              <p className="text-[10px] uppercase tracking-wider text-on-surface font-bold text-center mt-2">
                 Frequency →
               </p>
             </div>
@@ -106,25 +106,28 @@ export default function RfmBoard() {
         </div>
 
         {/* Segment cards */}
-        <div className="space-y-2">
-          {segments.map((name) => {
-            const s = data.segments[name];
-            return (
-              <div key={name} className="flex items-center justify-between p-2.5 rounded-xl bg-surface/60 border border-border">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: SEGMENT_COLORS[name] || "#999" }} />
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm text-mocha-dark truncate">{name}</p>
-                    <p className="text-[11px] text-text/50 truncate">{s.action}</p>
+        <div className="bg-[#ece8dd] border border-[#bcc9cc] rounded-2xl p-6 overflow-y-auto max-h-[420px] custom-scrollbar">
+          <h3 className="font-headline-md text-xl font-bold text-on-surface mb-8">Segment Summary</h3>
+          <div className="space-y-8">
+            {segments.map((name) => {
+              const s = data.segments[name];
+              const color = SEGMENT_COLORS[name] || "#999";
+              const totalCount = segments.reduce((acc, curr) => acc + data.segments[curr].count, 0);
+              const percentage = totalCount > 0 ? ((s.count / totalCount) * 100).toFixed(1) : 0;
+              return (
+                <div key={name} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-headline-md text-lg font-bold" style={{ color: color }}>{name}</span>
+                    <span className="font-headline-md text-lg text-on-surface-variant">{percentage}%</span>
                   </div>
+                  <div className="w-full h-2.5 bg-surface-white rounded-full overflow-hidden border border-[#bcc9cc]">
+                    <div className="h-full rounded-full" style={{ width: `${percentage}%`, backgroundColor: color }}></div>
+                  </div>
+                  <p className="text-sm font-label-md text-on-surface-variant font-medium leading-relaxed">{s.action}</p>
                 </div>
-                <div className="text-right flex-shrink-0 ml-2">
-                  <p className="font-bold text-sm text-mocha-dark">{s.count}</p>
-                  <p className="text-[11px] text-text/50">{inrCompact(s.revenue)}</p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

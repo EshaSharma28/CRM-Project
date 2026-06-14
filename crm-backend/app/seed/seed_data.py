@@ -182,6 +182,13 @@ def seed(num_customers: int = 500, reset: bool = True) -> None:
             last = max(order_dates) if order_dates else None
             lifecycle = _compute_lifecycle(signup, last, len(raw_orders), ref)
 
+            # ~3% of shoppers have a birthday TODAY (so the birthday automation
+            # has someone to celebrate in a live demo); rest spread across the year.
+            if rng.random() < 0.03:
+                dob = ref.replace(year=rng.randint(1962, 2005))
+            else:
+                dob = datetime(rng.randint(1962, 2005), rng.randint(1, 12), rng.randint(1, 28))
+
             customer = Customer(
                 name=fake.name(),
                 email=fake.unique.email(),
@@ -189,6 +196,8 @@ def seed(num_customers: int = 500, reset: bool = True) -> None:
                 city=rng.choice(CITIES),
                 channel_pref=rng.choices(CHANNELS, weights=[0.5, 0.35, 0.15])[0],
                 signup_date=signup,
+                dob=dob,
+                gender=rng.choices(["female", "male", "other"], weights=[0.49, 0.48, 0.03])[0],
                 persona=persona,
                 total_spent=total,
                 order_count=len(raw_orders),

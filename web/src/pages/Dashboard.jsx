@@ -1,14 +1,41 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { Users, Megaphone, Activity, ShoppingBag, ArrowRight, Bot } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { Users, Megaphone, Activity, ShoppingBag, ArrowRight, Bot, Sparkles, TrendingUp, MailCheck, MessageSquare, Bell } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import CountUp from "../components/CountUp";
 import RfmBoard from "../components/RfmBoard";
+import { Bean, CoffeeRing } from "../components/CoffeeDoodles";
 
-const COLORS = ["#4A3525", "#BE7E50", "#8FA587", "#D69A52", "#C9695E"];
+const COLORS = ["#12b1c5", "#346572", "#bf998d", "#77574d", "#006875"];
+
+function getCampaignIcon(channel) {
+  const c = channel?.toLowerCase() || '';
+  if (c === 'sms') return <MessageSquare className="w-8 h-8 text-[#004f58]" />;
+  if (c === 'push') return <Bell className="w-8 h-8 text-[#004f58]" />;
+  return <MailCheck className="w-8 h-8 text-[#004f58]" />;
+}
+
+function timeAgo(dateString) {
+  if (!dateString) return "Recently";
+  const diff = Date.now() - new Date(dateString).getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days === 0) return "Today";
+  if (days === 1) return "1 day ago";
+  return `${days} days ago`;
+}
+
+const BgSteam = ({ className }) => (
+  <svg viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    {/* Left Steam - Wavy with top curl */}
+    <path d="M45 180 C 10 140, 80 110, 30 60 C 10 40, 40 10, 50 30 C 55 40, 40 50, 35 40" />
+    {/* Right Steam - Shorter with right curl */}
+    <path d="M55 160 C 65 130, 100 120, 80 80 C 70 60, 50 80, 70 95" />
+  </svg>
+);
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
   const [agg, setAgg] = useState({ sent: 0, opened: 0, orders: 0 });
@@ -60,89 +87,105 @@ export default function Dashboard() {
   const openRate = agg.sent ? `${Math.round((agg.opened / agg.sent) * 100)}%` : "—";
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="relative min-w-0 max-w-7xl mx-auto space-y-6 pb-32">
       {/* Hero CTA */}
-      <div className="bg-gradient-to-r from-mocha-dark to-mocha text-surface-white p-8 rounded-3xl shadow-md relative overflow-hidden flex items-center justify-between">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <Bot className="w-48 h-48" />
-        </div>
+      <div className="bg-[#006875] text-white p-10 rounded-2xl relative overflow-hidden flex items-center justify-between border border-[#bcc9cc] shadow-sm mb-8 z-10">
+        <BgSteam className="absolute right-[25%] top-[-20px] w-64 h-64 text-white opacity-20" />
         <div className="relative z-10 max-w-xl">
-          <h1 className="text-3xl font-serif font-bold mb-2">Welcome to Brewhaus</h1>
-          <p className="text-surface-white/80 mb-6">Your audience is growing. What will you say next?</p>
-          <Link to="/copilot" className="inline-flex items-center gap-2 bg-caramel text-white px-6 py-3 rounded-xl font-medium shadow-sm transition-transform hover:scale-105 active:scale-95">
-            <Bot className="w-5 h-5" />
-            Start a campaign with the co-pilot
-          </Link>
+          <h1 className="font-headline-xl text-5xl mb-4 tracking-tight font-bold">Hi, Welcome to Brewhaus</h1>
+          <p className="text-white/90 font-body-md text-lg mb-8">Your audience is growing. What's next?</p>
+          <button onClick={() => navigate("/crema")} className="inline-flex items-center gap-2 bg-[#12b1c5] text-[#001f24] px-6 py-3 rounded-lg font-bold shadow-sm transition-transform hover:scale-105 active:scale-95">
+            <Sparkles className="w-5 h-5" />
+            Start a campaign with Crema
+            <ArrowRight className="w-5 h-5 ml-1" />
+          </button>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Shoppers", val: sum.total_customers, icon: Users, color: "text-mocha" },
-          { label: "Active Campaigns", val: activeCampaigns, icon: Megaphone, color: "text-caramel" },
-          { label: "Avg Open Rate", val: agg.sent ? (agg.opened / agg.sent) * 100 : 0, icon: Activity, color: "text-sage", fmt: (v) => agg.sent ? Math.round(v) + "%" : "—" },
-          { label: "Orders Attributed", val: agg.orders, icon: ShoppingBag, color: "text-success" },
+          { label: "Total Shoppers", val: sum.total_customers, icon: Users, subtext: "+12% vs last month", trend: true },
+          { label: "Active Campaigns", val: activeCampaigns, icon: Megaphone, subtext: "4 ending this week", trend: false },
+          { label: "Avg Open Rate", val: agg.sent ? (agg.opened / agg.sent) * 100 : 0, icon: Activity, subtext: "+3.2% optimization", trend: true, fmt: (v) => agg.sent ? Math.round(v) + "%" : "—" },
+          { label: "Orders Attributed", val: agg.orders, icon: ShoppingBag, subtext: "₹24,500 total value", trend: false },
         ].map((kpi, i) => (
-          <div key={i} className="card flex items-center gap-4">
-            <div className={`p-3 rounded-xl bg-surface ${kpi.color}`}>
-              <kpi.icon className="w-6 h-6" />
+          <div key={i} className="bg-surface-white p-6 rounded-2xl border border-outline-variant flex flex-col justify-between hover:shadow-sm transition-shadow">
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-on-surface-variant font-label-md font-bold">{kpi.label}</p>
+              <kpi.icon className="w-5 h-5 text-outline" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-text/60">{kpi.label}</p>
-              <h3 className="text-2xl font-bold font-serif text-mocha-dark">
-                <CountUp value={kpi.val} formatter={kpi.fmt} />
-              </h3>
+            <h3 className="font-headline-xl text-4xl text-on-surface leading-none tracking-tight font-bold mb-6">
+              <CountUp value={kpi.val} formatter={kpi.fmt} />
+            </h3>
+            <div className={`flex items-center gap-1.5 text-xs font-bold ${kpi.trend ? 'text-primary' : 'text-outline'}`}>
+              {kpi.trend && <TrendingUp className="w-3.5 h-3.5" />}
+              {kpi.subtext}
             </div>
           </div>
         ))}
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <h2 className="text-lg font-serif font-bold mb-4">Lifecycle Stages</h2>
-          <div className="h-64">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
+        <div className="bg-surface-white p-6 rounded-2xl border border-outline-variant flex flex-col">
+          <h2 className="font-headline-md text-xl font-bold text-on-surface mb-6">Lifecycle Stages</h2>
+          <div className="h-64 relative flex items-center justify-center mb-6">
             {lifecycleData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={lifecycleData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                    {lifecycleData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={lifecycleData} innerRadius={80} outerRadius={110} paddingAngle={0} dataKey="value" stroke="none">
+                      {lifecycleData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #bcc9cc', backgroundColor: '#fef9ee' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="font-headline-xl text-4xl font-bold text-on-surface leading-none">{sum.total_customers}</span>
+                  <span className="text-[10px] font-bold text-outline tracking-widest mt-1">TOTAL</span>
+                </div>
+              </>
             ) : (
-              <div className="h-full flex items-center justify-center text-text/50">No data</div>
+              <div className="h-full flex items-center justify-center text-outline">No data</div>
             )}
           </div>
-          <div className="flex flex-wrap justify-center gap-3 mt-2">
-             {lifecycleData.map((entry, index) => (
-               <div key={entry.name} className="flex items-center gap-1.5 text-xs">
-                 <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: COLORS[index % COLORS.length]}}></div>
-                 <span className="capitalize">{entry.name}</span>
-               </div>
-             ))}
+          <div className="grid grid-cols-2 gap-y-4 gap-x-2 mt-auto px-2">
+             {lifecycleData.map((entry, index) => {
+               const percentage = sum.total_customers ? Math.round((entry.value / sum.total_customers) * 100) : 0;
+               return (
+                 <div key={entry.name} className="flex items-center gap-2 font-label-md text-sm text-on-surface font-bold">
+                   <div className="w-3 h-3 rounded-full shrink-0" style={{backgroundColor: COLORS[index % COLORS.length]}}></div>
+                   <span className="capitalize">{entry.name} ({percentage}%)</span>
+                 </div>
+               );
+             })}
           </div>
         </div>
 
-        <div className="card">
-          <h2 className="text-lg font-serif font-bold mb-4">Persona Breakdown</h2>
-          <div className="h-64">
-            {personaData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={personaData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#EADFD2" />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#2C211B', fontSize: 12}} width={100} />
-                  <Tooltip cursor={{fill: '#FBF7F2'}} />
-                  <Bar dataKey="value" fill="#BE7E50" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-             ) : (
-              <div className="h-full flex items-center justify-center text-text/50">No data</div>
+        <div className="bg-surface-white p-6 rounded-2xl border border-[#bcc9cc] flex flex-col">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="font-headline-md text-xl font-bold text-on-surface">Persona Breakdown</h2>
+          </div>
+          <div className="space-y-6">
+            {personaData.length > 0 ? personaData.map((entry) => {
+              const maxVal = Math.max(...personaData.map(d => d.value), 1);
+              const pct = (entry.value / maxVal) * 100;
+              return (
+                <div key={entry.name}>
+                  <div className="flex justify-between items-center mb-2 font-label-md text-sm text-on-surface font-bold">
+                    <span>{entry.name}</span>
+                    <span>{entry.value} Users</span>
+                  </div>
+                  <div className="w-full h-3.5 bg-[#ece8dd] rounded-full overflow-hidden">
+                    <div className="h-full bg-[#77574d] rounded-full" style={{ width: `${pct}%` }}></div>
+                  </div>
+                </div>
+              );
+            }) : (
+              <div className="py-8 text-center text-outline">No data</div>
             )}
           </div>
         </div>
@@ -152,33 +195,36 @@ export default function Dashboard() {
       <RfmBoard />
 
       {/* Recent Campaigns */}
-      <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-serif font-bold">Recent Campaigns</h2>
-          <Link to="/campaigns" className="text-sm text-caramel font-medium flex items-center gap-1 hover:underline">
+      <div className="mt-8">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="font-headline-md text-xl font-bold text-on-surface">Recent Campaigns</h2>
+          <Link to="/campaigns" className="text-[#006875] font-label-md flex items-center gap-1 hover:underline font-bold text-sm">
             View all <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
-        <div className="divide-y divide-border">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {campaigns.length > 0 ? campaigns.slice(0, 3).map(c => (
-            <Link key={c.id} to={`/campaigns/${c.id}`} className="py-3 flex items-center justify-between hover:bg-surface/50 transition-colors -mx-6 px-6">
-              <div>
-                <p className="font-medium text-mocha-dark">{c.name}</p>
-                <p className="text-sm text-text/60 capitalize">{c.channel}</p>
+            <Link key={c.id} to={`/campaigns/${c.id}`} className="bg-surface-white border border-[#bcc9cc] rounded-2xl p-4 flex gap-4 items-center hover:shadow-md transition-shadow">
+              <div className="w-16 h-16 rounded-xl bg-[#54d7ec] flex items-center justify-center flex-shrink-0 shadow-sm">
+                {getCampaignIcon(c.channel)}
               </div>
-              <div>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                  c.status === 'sent' ? 'bg-success/10 text-success' :
-                  c.status === 'sending' ? 'bg-warning/10 text-warning animate-pulse' :
-                  c.status === 'scheduled' ? 'bg-caramel/10 text-caramel border border-caramel/20' :
-                  'bg-surface border border-border text-text'
+              <div className="flex flex-col items-start min-w-0">
+                <p className="font-bold text-on-surface leading-tight truncate w-full">{c.name}</p>
+                <p className="text-xs text-gray-500 mt-0.5 truncate w-full">
+                  {c.status === 'scheduled' ? 'Scheduled' : `Sent ${timeAgo(c.created_at || c.updated_at)}`}
+                </p>
+                <span className={`text-[10px] uppercase tracking-widest px-2 py-0.5 rounded font-bold mt-2 ${
+                  c.status === 'sent' ? 'bg-green-100 text-green-700' :
+                  c.status === 'sending' ? 'bg-[#e0f7fa] text-[#006875] animate-pulse' :
+                  c.status === 'scheduled' ? 'bg-[#f8f3e8] text-[#77574d]' :
+                  'bg-[#ece8dd] text-[#4c3129]'
                 }`}>
-                  {c.status}
+                  {c.status === 'sent' ? 'COMPLETED' : c.status === 'sending' ? 'ACTIVE' : c.status.toUpperCase()}
                 </span>
               </div>
             </Link>
           )) : (
-            <div className="py-8 text-center text-text/50">No recent campaigns.</div>
+            <div className="col-span-3 py-8 text-center text-outline bg-surface-white rounded-2xl border border-[#bcc9cc]">No recent campaigns.</div>
           )}
         </div>
       </div>

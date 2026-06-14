@@ -16,6 +16,8 @@ class CustomerOut(BaseModel):
     city: str
     channel_pref: str
     signup_date: datetime
+    dob: datetime | None = None
+    gender: str = "unknown"
     persona: str
     total_spent: float
     order_count: int
@@ -85,6 +87,7 @@ class CampaignCreateIn(BaseModel):
     message_template: str
     message_template_b: str | None = None
     channel_b: str | None = None
+    image_url: str | None = None
 
 
 class CampaignSendIn(BaseModel):
@@ -95,6 +98,13 @@ class DraftIn(BaseModel):
     """Ask the AI for a single message draft (used for 'regenerate' / variant B)."""
 
     description: str
+    channel: str = "whatsapp"
+
+
+class ImageIn(BaseModel):
+    """Ask the AI to design + generate a rich-media image for a message."""
+
+    message: str
     channel: str = "whatsapp"
 
 
@@ -156,6 +166,7 @@ class CopilotLaunchIn(BaseModel):
     message_template: str
     message_template_b: str | None = None
     channel_b: str | None = None
+    image_url: str | None = None
     scheduled_at: datetime | None = None
 
 

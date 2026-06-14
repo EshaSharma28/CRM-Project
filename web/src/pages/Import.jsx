@@ -1,38 +1,39 @@
 import { useState } from "react";
 import { api } from "../api";
-import { Upload, Download, CheckCircle2, AlertCircle, Sparkles, FileText } from "lucide-react";
 
 export default function Import() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-serif font-bold text-mocha-dark">Smart Data Import</h1>
-        <p className="text-text/60 mt-1">
-          Bring in your shoppers and orders in a single CSV file. Our AI will automatically figure out your column names and map them to the correct fields.
-        </p>
-      </div>
+    <div className="relative min-h-full">
+      <div className="p-8 max-w-4xl mx-auto space-y-8 relative z-10">
+        <section className="border-b border-outline-variant/30 pb-6">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface mb-2">Smart Data Import</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+            Bring in your shoppers and orders in a single CSV file. Our AI will automatically figure out your column names and map them to the correct fields.
+          </p>
+        </section>
 
-      <div className="max-w-2xl mx-auto">
-        <Dropzone
-          title="Smart Unified Import"
-          icon={Sparkles}
-          sample="customers"
-          columns="Any CSV with emails, names, order amounts, products, etc."
-          onUpload={api.ingestSmart}
-          renderResult={(r) => `${r.created_customers} customers created, ${r.updated_customers} updated, ${r.created_orders} orders added.`}
-        />
-      </div>
+        <div className="max-w-2xl mx-auto space-y-6">
+          <Dropzone
+            title="Smart Unified Import"
+            icon="auto_awesome"
+            sample="customers"
+            columns="Any CSV with emails, names, order amounts, products, etc."
+            onUpload={api.ingestSmart}
+            renderResult={(r) => `${r.created_customers} customers created, ${r.updated_customers} updated, ${r.created_orders} orders added.`}
+          />
 
-      <div className="card bg-surface/40 border-dashed">
-        <p className="text-sm text-text/60">
-          <b className="text-mocha-dark">How it works:</b> Upload a spreadsheet combining your users and their order history. The AI reads the headers and maps them directly to the CRM's internal models. We recompute lifecycle stages and RFM segments instantly!
-        </p>
+          <div className="bg-surface-container-low/50 border border-outline-variant/20 p-6 rounded-xl shadow-sm">
+            <p className="font-body-md text-on-surface-variant">
+              <b className="text-on-surface font-bold">How it works:</b> Upload a spreadsheet combining your users and their order history. The AI reads the headers and maps them directly to the CRM's internal models. We recompute lifecycle stages and RFM segments instantly!
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function Dropzone({ title, icon: Icon, sample, columns, onUpload, renderResult }) {
+function Dropzone({ title, icon, sample, columns, onUpload, renderResult }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -54,18 +55,18 @@ function Dropzone({ title, icon: Icon, sample, columns, onUpload, renderResult }
   }
 
   return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="bg-caramel/10 text-caramel p-2 rounded-lg"><Icon className="w-5 h-5" /></div>
-          <h2 className="text-lg font-serif font-bold">{title}</h2>
+    <div className="bg-surface-container-lowest border border-outline-variant/30 p-8 rounded-xl shadow-sm glass-effect">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/10 text-primary p-2 rounded-xl"><span className="material-symbols-outlined text-[20px]">{icon}</span></div>
+          <h2 className="font-headline-md text-headline-md text-on-surface">{title}</h2>
         </div>
         <a
           href={api.sampleUrl(sample)}
           download={`brewhaus-${sample}-sample.csv`}
-          className="text-xs text-caramel font-medium flex items-center gap-1 hover:underline"
+          className="font-label-sm text-primary hover:text-primary-fixed flex items-center gap-1.5 transition-colors uppercase tracking-wider font-bold"
         >
-          <Download className="w-3.5 h-3.5" /> Sample CSV
+          <span className="material-symbols-outlined text-[16px]">download</span> Sample CSV
         </a>
       </div>
 
@@ -73,12 +74,12 @@ function Dropzone({ title, icon: Icon, sample, columns, onUpload, renderResult }
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
-        className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-8 cursor-pointer transition-colors ${
-          dragOver ? "border-caramel bg-caramel/5" : "border-border hover:border-caramel/50"
+        className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl py-12 cursor-pointer transition-all ${
+          dragOver ? "border-primary bg-primary/5" : "border-outline-variant/30 hover:border-primary/50 hover:bg-surface-container-low/30"
         }`}
       >
-        <Upload className="w-6 h-6 text-text/40" />
-        <span className="text-sm text-text/60">
+        <span className="material-symbols-outlined text-[32px] text-on-surface-variant/50">upload</span>
+        <span className="font-label-md text-on-surface-variant">
           {busy ? "Uploading…" : "Drop CSV here or click to browse"}
         </span>
         <input
@@ -89,25 +90,26 @@ function Dropzone({ title, icon: Icon, sample, columns, onUpload, renderResult }
         />
       </label>
 
-      <p className="text-[11px] text-text/40 mt-2 flex items-start gap-1.5">
-        <FileText className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-        <span className="font-mono">{columns}</span>
+      <p className="font-label-sm text-on-surface-variant/70 mt-4 flex items-start gap-1.5">
+        <span className="material-symbols-outlined text-[16px] flex-shrink-0 mt-0.5">description</span>
+        <span>{columns}</span>
       </p>
 
       {result && (
-        <div className="mt-3 flex items-start gap-2 text-sm text-success bg-success/5 border border-success/20 rounded-lg p-3">
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
+        <div className="mt-6 flex items-start gap-3 bg-sage/15 border border-sage/20 rounded-xl p-4 shadow-sm">
+          <span className="material-symbols-outlined text-sage text-[20px] flex-shrink-0 mt-0.5">check_circle</span>
           <div>
-            <p className="font-medium">{renderResult(result)}</p>
+            <p className="font-label-md text-sage">{renderResult(result)}</p>
             {result.errors?.length > 0 && (
-              <p className="text-xs text-warning mt-1">{result.errors.length} row(s) skipped: {result.errors[0]}</p>
+              <p className="font-label-sm text-warning mt-1">{result.errors.length} row(s) skipped: {result.errors[0]}</p>
             )}
           </div>
         </div>
       )}
       {error && (
-        <div className="mt-3 flex items-center gap-2 text-sm text-error bg-error/5 border border-error/20 rounded-lg p-3">
-          <AlertCircle className="w-4 h-4" /> {error}
+        <div className="mt-6 flex items-center gap-3 bg-error/15 border border-error/20 rounded-xl p-4 shadow-sm">
+          <span className="material-symbols-outlined text-error text-[20px]">error</span>
+          <span className="font-label-md text-error">{error}</span>
         </div>
       )}
     </div>

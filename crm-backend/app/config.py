@@ -18,5 +18,11 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     groq_model: str = "llama-3.3-70b-versatile"
 
+    # Image generation (rich-media messages). Hugging Face = real gen, reliable.
+    # Free token at https://huggingface.co/settings/tokens. Falls back to a
+    # best-effort no-key service if unset.
+    hf_token: str = ""
+    hf_image_model: str = "black-forest-labs/FLUX.1-schnell"
+
 
 settings = Settings()

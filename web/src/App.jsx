@@ -5,7 +5,7 @@ import Layout from "./components/Layout";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import Copilot from "./pages/Copilot";
+import Crema from "./pages/Crema";
 import Agent from "./pages/Agent";
 import Audiences from "./pages/Audiences";
 import CampaignList from "./pages/CampaignList";
@@ -24,7 +24,7 @@ export default function App() {
         
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/copilot" element={<Copilot />} />
+          <Route path="/crema" element={<Crema />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/agent" element={<Agent />} />
           <Route path="/audiences" element={<Audiences />} />

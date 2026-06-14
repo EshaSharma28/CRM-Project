@@ -91,11 +91,22 @@ def campaign_stats(campaign_id: int, db: Session = Depends(get_db)):
 
     C = Communication
 
-    def count(expr) -> int:
-        return db.query(func.count(C.id)).filter(C.campaign_id == campaign_id, expr).scalar()
-
-    total = db.query(func.count(C.id)).filter(C.campaign_id == campaign_id).scalar()
-    sent = count(C.sent_at.isnot(None))
+    # One aggregate pass instead of ~10 separate COUNT round-trips. func.count(col)
+    # counts non-NULLs, which is exactly "this lifecycle timestamp is set".
+    total, sent, delivered, opened, read, clicked, failed, orders = (
+        db.query(
+            func.count(C.id),
+            func.count(C.sent_at),
+            func.count(C.delivered_at),
+            func.count(C.opened_at),
+            func.count(C.read_at),
+            func.count(C.clicked_at),
+            func.count(C.failed_at),
+            func.count(C.attributed_order_id),
+        )
+        .filter(C.campaign_id == campaign_id)
+        .one()
+    )
 
     # Attributed revenue: sum of the orders linked to this campaign's comms.
     revenue = (
@@ -109,12 +120,12 @@ def campaign_stats(campaign_id: int, db: Session = Depends(get_db)):
     result = {
         "audience": total,
         "sent": sent,
-        "delivered": count(C.delivered_at.isnot(None)),
-        "opened": count(C.opened_at.isnot(None)),
-        "read": count(C.read_at.isnot(None)),
-        "clicked": count(C.clicked_at.isnot(None)),
-        "failed": count(C.failed_at.isnot(None)),
-        "orders_attributed": count(C.attributed_order_id.isnot(None)),
+        "delivered": delivered,
+        "opened": opened,
+        "read": read,
+        "clicked": clicked,
+        "failed": failed,
+        "orders_attributed": orders,
         "attributed_revenue": round(revenue, 2),
         "est_cost": cost,
         "net_revenue": round(revenue - cost, 2),
@@ -270,18 +281,22 @@ def _ab_significance(a: dict, b: dict) -> dict:
 def _variant_stats(db: Session, campaign_id: int, variant: str, channel: str = "email") -> dict:
     C = Communication
 
-    def vcount(expr) -> int:
-        return db.query(func.count(C.id)).filter(
-            C.campaign_id == campaign_id, C.variant == variant, expr
-        ).scalar()
-
-    sent = vcount(C.sent_at.isnot(None))
-    delivered = vcount(C.delivered_at.isnot(None))
+    # Single aggregate pass per variant (see campaign_stats for the rationale).
+    sent, delivered, opened_only, read, clicked, failed, orders = (
+        db.query(
+            func.count(C.sent_at),
+            func.count(C.delivered_at),
+            func.count(C.opened_at),
+            func.count(C.read_at),
+            func.count(C.clicked_at),
+            func.count(C.failed_at),
+            func.count(C.attributed_order_id),
+        )
+        .filter(C.campaign_id == campaign_id, C.variant == variant)
+        .one()
+    )
     # WhatsApp/RCS report "read" instead of "opened" — treat both as an open.
-    opened = vcount(C.opened_at.isnot(None)) + vcount(C.read_at.isnot(None))
-    clicked = vcount(C.clicked_at.isnot(None))
-    failed = vcount(C.failed_at.isnot(None))
-    orders = vcount(C.attributed_order_id.isnot(None))
+    opened = opened_only + read
 
     revenue = (
         db.query(func.coalesce(func.sum(Order.amount), 0.0))

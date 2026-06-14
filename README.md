@@ -96,6 +96,22 @@ Robustness we model (the part the brief cares about most):
 
 ---
 
+## Every screen — what it does & why
+
+| Screen | What it does | Why it exists |
+|---|---|---|
+| **Dashboard** | KPI tiles (shoppers, open rate, orders), lifecycle & persona charts, **RFM board**, recent campaigns | One glance at base health + a fast path into the co-pilot |
+| **Crema** (co-pilot) | Chat-first: goal → audience (RFM rules + live count) → drafted message → AI image → A/B → launch | The core AI-native bet — the marketer's main surface |
+| **Autonomous agent** | One goal → a multi-step journey that executes itself, re-targeting non-engagers on another channel | The brief's "true AI agent" shape |
+| **Automations** | Always-on abandoned-cart recovery + birthday offers, running on live shopper activity | Lifecycle revenue without a human pressing send |
+| **Analytics Studio** | Channel performance, ROAS, revenue, top-campaign leaderboard | Aggregate view of what's working |
+| **Audiences** | Visual segment builder with a live count + sample | Carve audiences by hand when you don't want the AI to |
+| **Campaigns / detail** | List + live funnel (sent→delivered→opened→read→clicked), orders, revenue, **A/B significance**, AI insight | Where a send's performance surfaces |
+| **Shoppers** | Searchable table + RFM/channel/gender filters + a profile drawer with order history | Browse and understand individual customers |
+| **Import** | Drag-drop **any** CSV — the AI maps your column names to the model, ingests customers + orders, recomputes derived fields + RFM | Makes "ingest data" a real, forgiving path, not just the seed |
+| **Activity** | Live channel webhook feed + a **Reconcile lost events** button | Makes the async callback loop (and its self-healing) visible |
+| **Floating assistant** | A global AI helper to ask questions about the data or start a campaign from any screen | Keeps the product chat-first everywhere |
+
 ## Tech stack
 
 - **Backend:** Python · FastAPI · SQLAlchemy · Postgres (SQLite for local dev)
@@ -165,3 +181,35 @@ points `DATABASE_URL` at Postgres. Demo login: `marketer@brewhaus.coffee` / `bre
   approved asset library for brand safety.
 - **Schema.** `create_all` on startup; production would use Alembic migrations.
 - **Auth.** Lightweight demo gate; production needs real auth + multi-brand tenancy.
+
+## Known limitations & honest notes
+
+Things I consciously left incomplete, and why — so nothing here is a surprise:
+
+- **Settings is a UI placeholder.** The screen renders the form fields a real
+  settings page would have, but it is **not wired to persistence** — there's no
+  user/preferences store behind it yet. I prioritised the core marketing loop
+  (segment → send → measure → automate) over account configuration, which adds
+  no signal to what the brief evaluates. It would be backed by a simple
+  preferences table per workspace.
+- **Auth is a demo gate.** A single client-side demo login, not real
+  authentication. Production would need proper auth, sessions, and multi-brand
+  tenancy.
+- **Free-tier hosting sleeps.** On Render's free tier the services spin down
+  after ~15 min idle (≈30–50s cold start), and the always-on automation worker
+  pauses while asleep. Opening the URL wakes it. A paid always-on instance + a
+  real scheduler removes this.
+- **AI runs on free quotas.** Gemini's free tier is limited, so the app
+  **automatically falls back to Groq**; images use Hugging Face's free tier
+  (rate-limited, occasional cold start). The provider-agnostic layer makes
+  swapping or adding a provider a one-file change.
+- **A few early campaigns show empty funnels.** Campaigns created before the
+  production callback URL was configured never received their callbacks, and the
+  channel's in-memory truth for them is gone, so reconciliation can't recover
+  them. New campaigns and the live automations are correct.
+- **Channel truth store is in-memory.** The channel service remembers each
+  message's outcome in memory (for reconciliation). If it restarts, that memory
+  is lost. A real provider persists this.
+
+None of these affect the core loop the assignment is about — they're scope
+boundaries I drew on purpose to spend time where it mattered.
